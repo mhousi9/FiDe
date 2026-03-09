@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fin Deník</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#f5c842">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fin Deník">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(()=>{});
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #0a0c10;
+  --bg2:    #111318;
+  --bg3:    #181c26;
+  --bg4:    #1f2438;
+  --line:   #252b40;
+  --line2:  #1a1f30;
+  --acc:    #f5c842;
+  --acc2:   #e05a3a;
+  --grn:    #34d896;
+  --red:    #f05a5a;
+  --blue:   #4c9fff;
+  --purple: #9b7cff;
+  --txt:    #e2e6f0;
+  --txt2:   #7a8299;
+  --txt3:   #454d66;
+  --mono:   'IBM Plex Mono', monospace;
+  --sans:   'Manrope', sans-serif;
+  --r:      10px;
+  --r2:     6px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body { font-family: var(--sans); background: var(--bg); color: var(--txt); height: 100%; overflow: hidden; }
+
+/* ── App shell ── */
+#app { display: flex; flex-direction: column; height: 100dvh; max-width: 600px; margin: 0 auto; }
+
+/* ── Header ── */
+.hdr { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--bg2); border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.hdr-back { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg3); color: var(--txt2); font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; flex-shrink: 0; }
+.hdr-back:hover { border-color: var(--acc); color: var(--acc); }
+.hdr-back.hidden { opacity: 0; pointer-events: none; }
+.hdr-title { flex: 1; font-size: 1rem; font-weight: 700; letter-spacing: .01em; }
+.hdr-app-wrap { display: flex; align-items: center; gap: 8px; }
+.hdr-app-icon { width: 44px; height: 44px; border-radius: 11px; object-fit: cover; flex-shrink: 0; }
+
+/* Crop modal */
+#crop-modal-bg { position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;display:flex;align-items:center;justify-content:center; }
+#crop-modal-bg.hidden { display:none; }
+#crop-modal { background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:16px;width:min(360px,92vw);display:flex;flex-direction:column;gap:12px; }
+#crop-canvas-wrap { position:relative;width:100%;aspect-ratio:1;overflow:hidden;border-radius:var(--r2);background:#000;cursor:move;touch-action:none;user-select:none; }
+#crop-img { position:absolute;transform-origin:0 0;will-change:transform; }
+.crop-overlay { position:absolute;inset:0;pointer-events:none; }
+.crop-overlay::after { content:'';position:absolute;inset:25%;border:2px solid var(--acc);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.5); }
+#crop-zoom { width:100%;accent-color:var(--acc); }
+.crop-btns { display:flex;gap:8px; }
+.crop-btns button { flex:1;padding:10px;border-radius:var(--r2);border:1px solid var(--line);background:var(--bg3);color:var(--txt);font-family:var(--sans);font-size:.85rem;font-weight:600;cursor:pointer; }
+.crop-btns button.primary { background:var(--acc);color:#000;border-color:var(--acc); }
+.hdr-sub { font-size: .75rem; color: var(--txt3); font-weight: 500; display: block; margin-top: 1px; }
+.hdr-actions { display: flex; gap: 6px; }
+.icon-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg3); color: var(--txt2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .9rem; transition: all .15s; }
+.icon-btn:hover { border-color: var(--acc); color: var(--acc); }
+
+/* ── Bottom nav ── */
+.bnav { display: flex; background: var(--bg2); border-top: 1px solid var(--line); flex-shrink: 0; padding-bottom: var(--safe-b); }
+.bnav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 8px; background: none; border: none; color: var(--txt3); font-family: var(--sans); font-size: .65rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: color .15s; border-top: 2px solid transparent; }
+.bnav-btn .ico { font-size: 1.25rem; }
+.bnav-btn.active { color: var(--acc); border-top-color: var(--acc); }
+
+/* ── Screen container ── */
+.screens { flex: 1; overflow: hidden; position: relative; }
+.screen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; display: none; flex-direction: column; gap: 12px; }
+.screen.active { display: flex; }
+.screen.active > * { flex-shrink: 0; }
+
+/* ── Cards ── */
+.card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.card-hd { padding: 12px 14px; border-bottom: 1px solid var(--line2); display: flex; justify-content: space-between; align-items: center; }
+.card-label { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--txt3); }
+.card-body { padding: 12px 14px; }
+
+/* ── Stat grid ── */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+.stat-box { background: var(--bg3); border-radius: var(--r2); padding: 10px 12px; }
+.stat-lbl { font-size: .67rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--txt3); margin-bottom: 3px; }
+.stat-val { font-family: var(--mono); font-size: .92rem; font-weight: 600; line-height: 1.2; }
+.c-acc { color: var(--acc); }
+.c-grn { color: var(--grn); }
+.c-red { color: var(--red); }
+.c-blue { color: var(--blue); }
+.c-muted { color: var(--txt2); }
+
+/* ── Year cards ── */
+.year-card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; cursor: pointer; transition: border-color .15s, background .15s; display: flex; align-items: center; gap: 12px; }
+.year-card:hover { border-color: var(--acc); background: var(--bg3); }
+.year-card:active { background: var(--bg4); }
+.year-num { font-family: var(--mono); font-size: 1.4rem; font-weight: 600; color: var(--acc); min-width: 52px; }
+.year-stats-mini { flex: 1; display: flex; gap: 12px; flex-wrap: wrap; }
+.ys-item { }
+.ys-lbl { font-size: .65rem; color: var(--txt3); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+.ys-val { font-family: var(--mono); font-size: .82rem; margin-top: 1px; }
+.year-arrow { color: var(--txt3); font-size: .8rem; }
+.bar-track { height: 3px; background: var(--bg4); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+
+/* ── Month list ── */
+.month-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line2); cursor: pointer; transition: background .12s; }
+.month-row:last-child { border-bottom: none; }
+.month-row:hover { background: var(--bg3); }
+.month-row:active { background: var(--bg4); }
+.month-num { font-family: var(--mono); font-size: .75rem; color: var(--txt3); min-width: 18px; }
+.month-name { flex: 1; font-weight: 600; font-size: .9rem; }
+.month-meta { text-align: right; }
+.month-exp { font-family: var(--mono); font-size: .82rem; color: var(--red); }
+.month-sav { font-family: var(--mono); font-size: .72rem; color: var(--grn); margin-top: 1px; }
+.month-sav.neg { color: var(--red); }
+.month-arrow { color: var(--txt3); font-size: .75rem; margin-left: 4px; }
+
+/* ── Transaction list ── */
+.day-header { padding: 8px 14px 4px; font-size: .67rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--txt3); background: var(--bg3); border-bottom: 1px solid var(--line2); }
+.tx-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line2); cursor: pointer; transition: background .12s; }
+.tx-row:last-child { border-bottom: none; }
+.tx-row:hover { background: var(--bg3); }
+.tx-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.tx-dot.e { background: var(--red); }
+.tx-dot.i { background: var(--grn); }
+.tx-desc-wrap { flex: 1; min-width: 0; }
+.tx-desc { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-day-badge { font-size: .7rem; color: var(--txt3); margin-top: 1px; }
+.tx-amount { font-family: var(--mono); font-size: .88rem; font-weight: 600; white-space: nowrap; }
+.tx-amount.e { color: var(--red); }
+.tx-amount.i { color: var(--grn); }
+.tx-edit-ico { color: var(--txt3); font-size: .75rem; flex-shrink: 0; }
+
+/* ── FAB ── */
+.fab { position: fixed; bottom: calc(70px + var(--safe-b)); right: 16px; width: 52px; height: 52px; border-radius: 50%; background: var(--acc); color: #0a0c10; font-size: 1.5rem; font-weight: 700; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(245,200,66,.35); display: flex; align-items: center; justify-content: center; transition: transform .15s, box-shadow .15s; z-index: 100; }
+.fab:hover { transform: scale(1.07); box-shadow: 0 6px 28px rgba(245,200,66,.5); }
+.fab:active { transform: scale(.95); }
+.fab.hidden { display: none; }
+
+/* ── Modal ── */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
+.modal-bg.open { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px 16px 0 0; padding: 20px 16px calc(16px + var(--safe-b)); width: 100%; max-width: 600px; max-height: 88dvh; overflow-y: auto; }
+.modal-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 16px; }
+.modal-close { float: right; background: var(--bg3); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; color: var(--txt2); cursor: pointer; font-family: var(--sans); font-size: .8rem; }
+.modal-close:hover { color: var(--txt); }
+
+/* ── Form elements ── */
+.field { margin-bottom: 12px; }
+.field-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--txt3); margin-bottom: 5px; display: block; }
+.field-inp { width: 100%; background: var(--bg3); border: 1px solid var(--line); border-radius: var(--r2); padding: 10px 12px; color: var(--txt); font-family: var(--sans); font-size: .92rem; outline: none; transition: border-color .15s; }
+.field-inp:focus { border-color: var(--acc); }
+.field-inp::placeholder { color: var(--txt3); }
+select.field-inp option { background: var(--bg2); }
+.seg { display: flex; background: var(--bg3); border-radius: 8px; padding: 3px; gap: 2px; margin-bottom: 14px; }
+.seg-opt { flex: 1; padding: 8px; border: none; background: none; color: var(--txt2); font-family: var(--sans); font-size: .85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all .15s; }
+.seg-opt.on { background: var(--bg4); color: var(--txt); }
+.seg-opt.on.type-e { color: var(--red); }
+.seg-opt.on.type-i { color: var(--grn); }
+.btn-row2 { display: flex; gap: 8px; margin-top: 14px; }
+.btn { flex: 1; padding: 12px; border-radius: 8px; border: none; font-family: var(--sans); font-weight: 700; font-size: .9rem; cursor: pointer; transition: all .15s; }
+.btn-primary { background: var(--acc); color: #0a0c10; }
+.btn-primary:hover { background: #ffd454; }
+.btn-danger-ghost { background: rgba(240,90,90,.1); border: 1px solid rgba(240,90,90,.25); color: var(--red); }
+.btn-danger-ghost:hover { background: rgba(240,90,90,.2); }
+.btn-ghost { background: var(--bg3); border: 1px solid var(--line); color: var(--txt2); }
+
+/* ── Investments table ── */
+.inv-card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-bottom: 8px; cursor: pointer; transition: border-color .12s; }
+.inv-card:hover { border-color: var(--line); }
+.inv-card-hd { padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
+.inv-ticker { font-family: var(--mono); font-weight: 600; font-size: .9rem; }
+.inv-name { font-size: .78rem; color: var(--txt2); flex: 1; }
+.inv-total { font-family: var(--mono); font-size: .88rem; font-weight: 600; }
+.inv-card-ft { padding: 6px 14px 10px; display: flex; gap: 12px; }
+.inv-meta { font-size: .72rem; color: var(--txt3); }
+.badge { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: .7rem; font-weight: 700; }
+.badge-buy { background: rgba(52,216,150,.12); color: var(--grn); }
+.badge-sell { background: rgba(240,90,90,.12); color: var(--red); }
+.badge-degiro { background: rgba(76,159,255,.12); color: var(--blue); }
+.badge-ib { background: rgba(245,200,66,.12); color: var(--acc); }
+.badge-btc { background: rgba(247,147,26,.12); color: #f7931a; }
+.badge-dip { background: rgba(155,124,255,.12); color: var(--purple); }
+
+/* ── Investment broker cards ── */
+.inv-broker-card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 8px; cursor: pointer; transition: background .12s; }
+.inv-broker-card:hover { background: var(--bg3); }
+.inv-broker-hd { padding: 12px 14px; display: flex; align-items: center; gap: 8px; }
+.inv-broker-ft { padding: 4px 14px 10px; display: flex; gap: 8px; }
+
+/* ── Loading overlay ── */
+.loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 9999; backdrop-filter: blur(4px); }
+.loading-overlay.hidden { display: none; }
+.loading-spinner { width: 44px; height: 44px; border: 3px solid var(--bg4); border-top-color: var(--acc); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: .9rem; color: var(--txt2); letter-spacing: .05em; }
+
+/* ── Settings ── */
+.setting-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line2); cursor: pointer; transition: background .12s; }
+.setting-row:last-child { border-bottom: none; }
+.setting-row:hover { background: var(--bg3); }
+.setting-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+.setting-icon.yellow { background: rgba(245,200,66,.12); }
+.setting-icon.blue { background: rgba(76,159,255,.12); }
+.setting-icon.red { background: rgba(240,90,90,.12); }
+.setting-icon.green { background: rgba(52,216,150,.12); }
+.setting-text { flex: 1; }
+.setting-title { font-weight: 600; font-size: .9rem; }
+.setting-desc { font-size: .75rem; color: var(--txt2); margin-top: 2px; }
+.setting-arrow { color: var(--txt3); }
+
+/* ── Empty state ── */
+.empty { text-align: center; padding: 48px 20px; color: var(--txt3); }
+.empty-ico { font-size: 2.8rem; margin-bottom: 10px; }
+.empty p { font-size: .88rem; line-height: 1.5; }
+
+/* ── Total banner ── */
+.total-banner { background: linear-gradient(135deg, var(--bg3) 0%, var(--bg4) 100%); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; }
+.total-banner-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.total-banner-row:last-child { margin-bottom: 0; }
+.tb-label { font-size: .7rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--txt3); }
+.tb-val { font-family: var(--mono); font-size: .95rem; font-weight: 600; }
+
+/* ── Salary row ── */
+.salary-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(245,200,66,.04); border-top: 1px solid var(--line2); }
+.salary-lbl { font-size: .75rem; color: var(--txt3); font-weight: 600; white-space: nowrap; }
+.salary-inp { flex: 1; background: var(--bg3); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; color: var(--txt); font-family: var(--mono); font-size: .88rem; outline: none; }
+.salary-inp:focus { border-color: var(--acc); }
+.salary-unit { font-size: .75rem; color: var(--txt3); }
+
+/* ── Month tabs ── */
+.mtab-bar { display: flex; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.mtab-btn { flex: 1; padding: 12px 8px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--txt3); font-family: var(--sans); font-size: .85rem; font-weight: 700; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.mtab-btn.active { color: var(--txt); border-bottom-color: var(--acc); background: var(--bg3); }
+.mtab-btn:not(.active):hover { color: var(--txt2); background: var(--bg3); }
+.mtab-count { background: var(--bg4); border-radius: 20px; padding: 1px 7px; font-size: .72rem; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+
+.sep { border: none; border-top: 1px solid var(--line2); margin: 4px 0; }
+.mt4 { margin-top: 4px; }
+.mt8 { margin-top: 8px; }
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="hdr">
+    <button class="icon-btn hdr-back hidden" id="hdr-back" onclick="goBack()">←</button>
+    <div style="flex:1">
+      <div class="hdr-app-wrap" id="hdr-title">💰 Fin Deník</div>
+      <span class="hdr-sub" id="hdr-sub" style="display:none"></span>
+    </div>
+    <div class="hdr-actions" id="hdr-actions"></div>
+  </div>
+
+  <!-- Screens -->
+  <div class="screens">
+    <!-- S0: Years overview -->
+    <div class="screen active" id="screen-years"></div>
+    <!-- S1: Months in year -->
+    <div class="screen" id="screen-months"></div>
+    <!-- S2: Month detail -->
+    <div class="screen" id="screen-month"></div>
+    <!-- S3: Investments -->
+    <div class="screen" id="screen-inv"></div>
+    <!-- S4: Settings -->
+    <div class="screen" id="screen-settings"></div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab hidden" id="fab" onclick="openAddModal()">+</button>
+
+  <!-- Bottom nav -->
+  <div class="bnav">
+    <button class="bnav-btn active" id="bnav-home" onclick="navTo('home')"><span class="ico">🏠</span>Přehled</button>
+    <button class="bnav-btn" id="bnav-inv" onclick="navTo('inv')"><span class="ico">📈</span>Investice</button>
+    <button class="bnav-btn" id="bnav-settings" onclick="navTo('settings')"><span class="ico">⚙️</span>Nastavení</button>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-bg" id="modal-add">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="modal-title" id="modal-title">Nová položka</div>
+      <button class="modal-close" onclick="closeModal('modal-add')">✕ Zavřít</button>
+    </div>
+    <div class="seg" id="modal-type-seg">
+      <button class="seg-opt on type-e" onclick="setModalType('e',this)">− Výdaj</button>
+      <button class="seg-opt type-i" onclick="setModalType('i',this)">+ Příjem</button>
+    </div>
+    <div class="field">
+      <label class="field-label">Den v měsíci</label>
+      <input type="number" class="field-inp" id="modal-day" min="1" max="31" placeholder="1–31">
+    </div>
+    <div class="field">
+      <label class="field-label">Popis</label>
+      <input type="text" class="field-inp" id="modal-desc" placeholder="Za co...">
+    </div>
+    <div class="field">
+      <label class="field-label">Částka (Kč)</label>
+      <input type="number" class="field-inp" id="modal-amount" placeholder="0" min="0" step="any">
+    </div>
+    <div class="btn-row2">
+      <button class="btn btn-danger-ghost" id="modal-delete-btn" style="display:none;flex:0 0 auto;padding:12px 18px" onclick="deleteCurrentTx()">🗑</button>
+      <button class="btn btn-primary" onclick="saveModal()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Investment Modal -->
+<div class="modal-bg" id="modal-inv">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="modal-title" id="inv-modal-title">Přidat investici</div>
+      <button class="modal-close" onclick="closeModal('modal-inv')">✕</button>
+    </div>
+    <div class="field">
+      <label class="field-label">Typ</label>
+      <select class="field-inp" id="inv-type"><option>Nákup</option><option>Prodej</option></select>
+    </div>
+    <div class="field">
+      <label class="field-label">Datum</label>
+      <input type="date" class="field-inp" id="inv-date">
+    </div>
+    <div class="field">
+      <label class="field-label">Broker</label>
+      <select class="field-inp" id="inv-broker" onchange="onBrokerChange()">
+        <option>DEGIRO</option><option>Interactive Brokers</option><option>Raiffeisen DIP</option><option>Bitcoin</option><option>Ethereum</option>
+        <option disabled>──────────</option>
+        <option id="inv-broker-custom-opts"></option>
+        <option value="__jiny__">+ Jiný (nový broker)</option>
+      </select>
+    </div>
+    <div class="field" id="inv-custom-broker-field" style="display:none">
+      <label class="field-label">Název brokera</label>
+      <input type="text" class="field-inp" id="inv-custom-broker" placeholder="Název brokera">
+    </div>
+    <div class="field">
+      <label class="field-label">Ticker</label>
+      <input type="text" class="field-inp" id="inv-ticker" placeholder="VWCE">
+    </div>
+    <div class="field">
+      <label class="field-label">Název aktiva</label>
+      <input type="text" class="field-inp" id="inv-name" placeholder="Vanguard FTSE All-World">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field">
+        <label class="field-label">Počet kusů</label>
+        <input type="number" class="field-inp" id="inv-qty" placeholder="1" step="any">
+      </div>
+      <div class="field">
+        <label class="field-label">Cena / ks</label>
+        <input type="number" class="field-inp" id="inv-price" placeholder="0" step="any">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Měna</label>
+      <select class="field-inp" id="inv-currency">
+        <option>CZK</option><option>EUR</option><option>USD</option><option>BTC</option><option>ETH</option>
+      </select>
+    </div>
+    <div class="btn-row2">
+      <button class="btn btn-sec" id="inv-delete-btn" style="display:none;color:var(--red)" onclick="deleteEditInv()">🗑 Smazat</button>
+      <button class="btn btn-primary" onclick="saveInv()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Year Modal -->
+<div class="modal-bg" id="modal-year">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="modal-title">Přidat rok</div>
+      <button class="modal-close" onclick="closeModal('modal-year')">✕</button>
+    </div>
+    <div class="field">
+      <label class="field-label">Rok</label>
+      <input type="number" class="field-inp" id="add-year-inp" min="2000" max="2099" placeholder="2026">
+    </div>
+    <div class="btn-row2">
+      <button class="btn btn-primary" onclick="saveNewYear()">Přidat</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const SK = 'findenik3';
+const MONTHS = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+const MONTHS_UP = ['LEDEN','ÚNOR','BŘEZEN','DUBEN','KVĚTEN','ČERVEN','ČERVENEC','SRPEN','ZÁŘÍ','ŘÍJEN','LISTOPAD','PROSINEC'];
+
+let db = { transactions: {}, investments: [] };
+
+function load() {
+  const r = localStorage.getItem(SK);
+  if (r) try { db = JSON.parse(r); } catch(e) {}
+}
+function save() { localStorage.setItem(SK, JSON.stringify(db)); }
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+function buildAppTitle() {
+  const name = db.appName || 'Fin Deník';
+  const icon = db.appIcon;
+  const imgTag = icon ? `<img class="hdr-app-icon" src="${icon}" alt="">` : '💰';
+  return `${imgTag} <span style="font-weight:700;font-size:1rem;letter-spacing:.01em">${name}</span>`;
+}
+
+// ── Crop modal state ──
+let _cropImgData = null;
+let _cropX = 0, _cropY = 0, _cropScale = 1;
+let _cropDragging = false, _cropLastX = 0, _cropLastY = 0;
+
+function openIconPicker() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => openCropModal(ev.target.result);
+    r.readAsDataURL(f);
+  };
+  inp.click();
+}
+
+function openCropModal(src) {
+  _cropX = 0; _cropY = 0; _cropScale = 1;
+  const bg = document.getElementById('crop-modal-bg');
+  const img = document.getElementById('crop-img');
+  const zoom = document.getElementById('crop-zoom');
+  img.onload = () => {
+    _cropImgData = src;
+    // Auto-fit: scale so the shorter side fills the crop area
+    const wrap = document.getElementById('crop-canvas-wrap');
+    const wrapSize = wrap.offsetWidth;
+    const fitScale = wrapSize / Math.min(img.naturalWidth, img.naturalHeight);
+    // start at fit scale, clamp between slider min/max
+    _cropScale = Math.max(0.05, Math.min(3, fitScale));
+    // center the image
+    _cropX = (wrapSize - img.naturalWidth * _cropScale) / 2;
+    _cropY = (wrapSize - img.naturalHeight * _cropScale) / 2;
+    zoom.min = Math.min(0.05, _cropScale * 0.5).toFixed(3);
+    zoom.max = Math.max(3, _cropScale * 2).toFixed(1);
+    zoom.value = _cropScale;
+    applyTransform();
+    bg.classList.remove('hidden');
+  };
+  img.src = src;
+
+  // Drag events
+  const wrap = document.getElementById('crop-canvas-wrap');
+  wrap.onpointerdown = ev => { _cropDragging=true; _cropLastX=ev.clientX; _cropLastY=ev.clientY; wrap.setPointerCapture(ev.pointerId); };
+  wrap.onpointermove = ev => {
+    if (!_cropDragging) return;
+    _cropX += ev.clientX - _cropLastX; _cropY += ev.clientY - _cropLastY;
+    _cropLastX = ev.clientX; _cropLastY = ev.clientY;
+    applyTransform();
+  };
+  wrap.onpointerup = () => { _cropDragging = false; };
+  zoom.oninput = () => { _cropScale = parseFloat(zoom.value); applyTransform(); };
+}
+
+function applyTransform() {
+  const img = document.getElementById('crop-img');
+  img.style.transform = `translate(${_cropX}px,${_cropY}px) scale(${_cropScale})`;
+}
+
+function fillCrop() {
+  const img = document.getElementById('crop-img');
+  const wrap = document.getElementById('crop-canvas-wrap');
+  const zoom = document.getElementById('crop-zoom');
+  const wrapSize = wrap.offsetWidth;
+  // Scale so the shorter side fills the yellow crop box (inset 25% = 50% of wrap)
+  const cropBoxSize = wrapSize * 0.5;
+  _cropScale = cropBoxSize / Math.min(img.naturalWidth, img.naturalHeight);
+  _cropX = (wrapSize - img.naturalWidth * _cropScale) / 2;
+  _cropY = (wrapSize - img.naturalHeight * _cropScale) / 2;
+  zoom.min = Math.min(0.05, _cropScale * 0.5).toFixed(3);
+  zoom.max = Math.max(3, _cropScale * 2).toFixed(1);
+  zoom.value = _cropScale;
+  applyTransform();
+}
+
+function closeCropModal() {
+  document.getElementById('crop-modal-bg').classList.add('hidden');
+}
+
+function confirmCrop() {
+  const wrap = document.getElementById('crop-canvas-wrap');
+  const img = document.getElementById('crop-img');
+  const size = wrap.offsetWidth;
+  const canvas = document.createElement('canvas');
+  canvas.width = 128; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.beginPath(); ctx.roundRect(0,0,128,128,20); ctx.clip();
+  const scaleRatio = 128 / size;
+  const iw = img.naturalWidth * _cropScale * scaleRatio;
+  const ih = img.naturalHeight * _cropScale * scaleRatio;
+  const dx = _cropX * scaleRatio;
+  const dy = _cropY * scaleRatio;
+  ctx.drawImage(img, dx, dy, iw, ih);
+  db.appIcon = canvas.toDataURL('image/png');
+  save();
+  closeCropModal();
+  updateHeader();
+}
+
+function removeAppIcon() {
+  delete db.appIcon;
+  save();
+  updateHeader();
+  renderSettings();
+}
+
+function resetAppIcon() {
+  delete db.appIcon;
+  save();
+  updateHeader();
+  renderSettings();
+}
+
+function saveAppName() {
+  const val = document.getElementById('app-name-inp').value.trim();
+  db.appName = val || 'Fin Deník';
+  save();
+  updateHeader();
+  renderSettings();
+}
+
+function getMD(y, m) {
+  y = String(y); m = String(m);
+  if (!db.transactions[y]) db.transactions[y] = {};
+  if (!db.transactions[y][m]) db.transactions[y][m] = { expenses:[], income:[], salary:0 };
+  return db.transactions[y][m];
+}
+
+function fmt(n) {
+  if (Math.abs(n) >= 1000000) return (n/1000000).toFixed(1) + ' M Kč';
+  if (Math.abs(n) >= 1000) return Math.round(n/100)/10 + ' tis';
+  return Math.round(n).toLocaleString('cs-CZ') + ' Kč';
+}
+function fmtFull(n) { return Math.round(n).toLocaleString('cs-CZ') + ' Kč'; }
+function fmtCurr(n, c) {
+  if (c==='CZK') return fmtFull(n);
+  if (c==='USD') return '$' + n.toLocaleString('en-US',{maximumFractionDigits:2});
+  if (c==='EUR') return '€' + n.toLocaleString('en-US',{maximumFractionDigits:2});
+  return n + ' ' + c;
+}
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+let _nav = 'home';   // home | inv | settings
+let _stack = [];     // [{screen, year?, month?}]
+let _editTx = null;  // {id, type} for editing
+let _curY = null, _curM = null;
+
+function navTo(section) {
+  _nav = section;
+  _stack = [];
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('bnav-' + (section === 'home' ? 'home' : section)).classList.add('active');
+
+  if (section === 'home') { showScreen('years'); renderYears(); }
+  if (section === 'inv')  { _invView = {level:'top'}; showScreen('inv');  renderInv(); }
+  if (section === 'settings') { showScreen('settings'); renderSettings(); }
+
+  updateHdr();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+function openYear(year) {
+  _stack.push('years');
+  _curY = year; _curM = null;
+  showScreen('months');
+  renderMonths(year);
+  updateHdr();
+}
+
+function openMonth(year, month) {
+  _stack.push('months');
+  _curY = year; _curM = month;
+  showScreen('month');
+  renderMonth(year, month);
+  updateHdr();
+}
+
+function goBack() {
+  if (_nav === 'inv' && _invView.level !== 'top') { invBack(); return; }
+  const prev = _stack.pop();
+  if (prev === 'years') { _curM = null; showScreen('years'); renderYears(); }
+  if (prev === 'months') { _curM = null; showScreen('months'); renderMonths(_curY); }
+  updateHdr();
+}
+
+function updateHdr() {
+  const back = document.getElementById('hdr-back');
+  const title = document.getElementById('hdr-title');
+  const sub = document.getElementById('hdr-sub');
+  const actions = document.getElementById('hdr-actions');
+  const fab = document.getElementById('fab');
+
+  const invDeep = _nav === 'inv' && _invView.level !== 'top';
+  back.classList.toggle('hidden', _stack.length === 0 && !invDeep);
+
+  if (_nav === 'inv') {
+    if (_invView.level === 'top') title.textContent = '📈 Investice';
+    else if (_invView.level === 'broker') title.textContent = _invView.broker;
+    else title.textContent = _invView.ticker;
+    sub.style.display = 'none';
+    actions.innerHTML = '';
+    fab.className = _invView.level === 'top' ? 'fab' : 'fab hidden';
+    if (_invView.level === 'top') fab.onclick = openAddInv;
+    return;
+  }
+  if (_nav === 'settings') {
+    title.className = 'hdr-app-wrap';
+    title.innerHTML = buildAppTitle();
+    sub.style.display = 'none';
+    actions.innerHTML = '';
+    fab.className = 'fab hidden';
+    return;
+  }
+
+  // Home stack
+  if (_stack.length === 0) {
+    title.className = 'hdr-app-wrap';
+    title.innerHTML = buildAppTitle();
+    sub.style.display = 'none';
+    actions.innerHTML = `<button class="icon-btn" onclick="openModal('modal-year')" title="Přidat rok">＋</button>`;
+    fab.className = 'fab hidden';
+  } else if (_stack.length === 1) {
+    // on months screen
+    title.className = 'hdr-title';
+    title.textContent = _curY;
+    sub.style.display = 'none';
+    actions.innerHTML = `<button class="icon-btn" onclick="deleteYear(${_curY})" title="Smazat rok" style="color:var(--red)">🗑</button>`;
+    fab.className = 'fab hidden';
+  } else {
+    // on month detail
+    title.className = 'hdr-title';
+    title.textContent = MONTHS[_curM - 1] + ' ' + _curY;
+    sub.style.display = 'none';
+    actions.innerHTML = `<button class="icon-btn" onclick="deleteMonth(${_curY},${_curM})" title="Smazat měsíc" style="color:var(--red)">🗑</button>`;
+    fab.className = 'fab';
+    fab.onclick = openAddModal;
+  }
+}
+
+// ═══════════════════════════════════════════════
+// RENDER: Years
+// ═══════════════════════════════════════════════
+function renderYears() {
+  const years = Object.keys(db.transactions).map(Number).sort((a,b)=>b-a);
+  let totalSal=0, totalExp=0, totalInc=0, totalSaved=0;
+
+  const sc = document.getElementById('screen-years');
+
+  if (!years.length) {
+    sc.innerHTML = `<div class="empty"><div class="empty-ico">📭</div><p>Žádná data.<br>Importujte data v Nastavení nebo přidejte rok pomocí ＋</p></div>`;
+    return;
+  }
+
+  const SAVED_FROM = 2016; // roky před tímto nemají data výdajů
+
+  const yearCards = years.map(y => {
+    const yd = db.transactions[y] || {};
+    let yExp=0, yInc=0, ySal=0;
+    for (const m in yd) {
+      yExp += (yd[m].expenses||[]).reduce((s,e)=>s+e.amount,0);
+      yInc += (yd[m].income||[]).reduce((s,e)=>s+e.amount,0);
+      ySal += yd[m].salary||0;
+    }
+    const hasSaved = y >= SAVED_FROM;
+    const saved = ySal - yExp + yInc;
+    totalSal += ySal;
+    if (hasSaved) { totalExp += yExp; totalInc += yInc; totalSaved += saved; }
+    const pct = ySal ? Math.max(0, Math.min(100, hasSaved ? saved/ySal*100 : 100)) : 0;
+    const clr = saved >= 0 ? 'var(--grn)' : 'var(--red)';
+    const savedHtml = hasSaved
+      ? `<div class="ys-item"><div class="ys-lbl">Uspořeno</div><div class="ys-val" style="color:${clr}">${saved>=0?'+':''}${fmt(saved)}</div></div>`
+      : '';
+    const expHtml = hasSaved
+      ? `<div class="ys-item"><div class="ys-lbl">Výdaje</div><div class="ys-val c-red">−${fmt(yExp)}</div></div>`
+      : '';
+    return `<div class="year-card" onclick="openYear(${y})">
+      <div class="year-num">${y}</div>
+      <div class="year-stats-mini">
+        <div class="ys-item"><div class="ys-lbl">Výplata</div><div class="ys-val c-acc">${fmt(ySal)}</div></div>
+        ${expHtml}
+        ${savedHtml}
+      </div>
+      <div class="year-arrow">›</div>
+      <div style="position:absolute;left:68px;right:50px;bottom:8px" class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${clr}"></div></div>
+    </div>`;
+  }).join('');
+
+  sc.innerHTML = `
+    <div class="total-banner">
+      <div class="total-banner-row"><span class="tb-label">Vyděláno celkem</span><span class="tb-val c-acc">${fmtFull(totalSal)}</span></div>
+      <div class="total-banner-row"><span class="tb-label">Výdaje celkem</span><span class="tb-val c-red">−${fmtFull(totalExp)}</span></div>
+      <div class="total-banner-row"><span class="tb-label">Příjmy celkem</span><span class="tb-val c-grn">+${fmtFull(totalInc)}</span></div>
+      <div class="total-banner-row" style="border-top:1px solid var(--line2);padding-top:8px;margin-top:6px"><span class="tb-label">Ušetřeno celkem <span style="color:var(--txt3);font-size:.7em">(od ${SAVED_FROM})</span></span><span class="tb-val" style="color:${totalSaved>=0?'var(--grn)':'var(--red)'}">${totalSaved>=0?'+':''}${fmtFull(totalSaved)}</span></div>
+    </div>
+    <div style="position:relative">${yearCards}</div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER: Months
+// ═══════════════════════════════════════════════
+function renderMonths(year) {
+  const sc = document.getElementById('screen-months');
+  const yd = db.transactions[year] || {};
+  let yExp=0, yInc=0, ySal=0;
+  const hasSaved = year >= 2016;
+
+  const rows = MONTHS.map((mn, i) => {
+    const m = String(i+1);
+    const md = yd[m] || {expenses:[],income:[],salary:0};
+    const exp = (md.expenses||[]).reduce((s,e)=>s+e.amount,0);
+    const inc = (md.income||[]).reduce((s,e)=>s+e.amount,0);
+    const sal = md.salary||0;
+    const saved = sal - exp + inc;
+    yExp+=exp; yInc+=inc; ySal+=sal;
+    const hasTx = (md.expenses||[]).length + (md.income||[]).length > 0;
+    const savedStr = (hasSaved && sal) ? (saved>=0?'+':'')+fmt(saved) : '';
+    const savedCls = saved<0?'neg':'';
+    return `<div class="month-row" onclick="openMonth(${year},${i+1})">
+      <div class="month-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="month-name">${mn}</div>
+      ${hasTx ? `<div class="month-meta">
+        ${hasSaved ? `<div class="month-exp">−${fmt(exp)}</div>` : ''}
+        ${savedStr ? `<div class="month-sav ${savedCls}">${savedStr}</div>` : ''}
+      </div>` : '<div class="month-meta" style="color:var(--txt3);font-size:.75rem">—</div>'}
+      <div class="month-arrow">›</div>
+    </div>`;
+  }).join('');
+
+  const totalSaved = ySal - yExp + yInc;
+  const savedRow = hasSaved
+    ? `<div class="total-banner-row"><span class="tb-label">Ušetřeno rok</span><span class="tb-val" style="color:${totalSaved>=0?'var(--grn)':'var(--red)'}">${totalSaved>=0?'+':''}${fmtFull(totalSaved)}</span></div>`
+    : '';
+  sc.innerHTML = `
+    <div class="total-banner">
+      <div class="total-banner-row"><span class="tb-label">Výplata rok</span><span class="tb-val c-acc">${fmtFull(ySal)}</span></div>
+      ${hasSaved ? `<div class="total-banner-row"><span class="tb-label">Výdaje rok</span><span class="tb-val c-red">−${fmtFull(yExp)}</span></div>` : ''}
+      ${savedRow}
+    </div>
+    <div class="card"><div class="card-hd"><span class="card-label">Měsíce</span></div>${rows}</div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER: Month detail
+// ═══════════════════════════════════════════════
+let _monthTab = 'e'; // 'e' = výdaje, 'i' = příjmy
+
+function renderMonth(year, month) {
+  const sc = document.getElementById('screen-month');
+  const md = getMD(year, month);
+  const exps = [...(md.expenses||[])].sort((a,b)=>a.day-b.day);
+  const incs = [...(md.income||[])].sort((a,b)=>a.day-b.day);
+  const salary = md.salary||0;
+  const totalExp = exps.reduce((s,e)=>s+e.amount,0);
+  const totalInc = incs.reduce((s,e)=>s+e.amount,0);
+  const saved = salary - totalExp + totalInc;
+
+  // Expenses grouped by day
+  const byDay = {};
+  exps.forEach(tx => { const k=tx.day; if(!byDay[k]) byDay[k]=[]; byDay[k].push(tx); });
+  const days = Object.keys(byDay).map(Number).sort((a,b)=>a-b);
+
+  const expRows = days.map(d => {
+    const hdr = `<div class="day-header">${d}. ${MONTHS[month-1].toLowerCase()}</div>`;
+    const items = byDay[d].map(tx => `
+      <div class="tx-row" onclick="openEditModal('${tx.id}','e')">
+        <div class="tx-desc-wrap"><div class="tx-desc">${escH(tx.desc)}</div></div>
+        <div class="tx-amount e">−${fmtFull(tx.amount)}</div>
+        <div class="tx-edit-ico">✎</div>
+      </div>`).join('');
+    return hdr + items;
+  }).join('') || '<div class="empty" style="padding:32px"><div class="empty-ico">✅</div><p>Žádné výdaje.</p></div>';
+
+  // Income — flat list, no dates
+  const incRows = incs.map(tx => `
+    <div class="tx-row" onclick="openEditModal('${tx.id}','i')">
+      <div class="tx-desc-wrap"><div class="tx-desc">${escH(tx.desc)}</div></div>
+      <div class="tx-amount i">+${fmtFull(tx.amount)}</div>
+      <div class="tx-edit-ico">✎</div>
+    </div>`).join('') || '<div class="empty" style="padding:32px"><div class="empty-ico">💸</div><p>Žádné příjmy.</p></div>';
+
+  const activeE = _monthTab==='e';
+  const hasSaved = _curY >= 2016;
+
+  sc.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-lbl">Výdaje</div><div class="stat-val c-red">−${fmtFull(totalExp)}</div></div>
+      <div class="stat-box"><div class="stat-lbl">Příjmy</div><div class="stat-val c-grn">+${fmtFull(totalInc)}</div></div>
+      ${salary ? `<div class="stat-box"><div class="stat-lbl">Výplata</div><div class="stat-val c-acc">${fmtFull(salary)}</div></div>` : '<div class="stat-box"><div class="stat-lbl">Výplata</div><div class="stat-val c-muted">—</div></div>'}
+      ${hasSaved ? `<div class="stat-box"><div class="stat-lbl">Ušetřeno</div><div class="stat-val" style="color:${saved>=0?'var(--grn)':'var(--red)'}">${saved>=0?'+':''}${fmtFull(saved)}</div></div>` : ''}
+    </div>
+    <div class="card">
+      <div class="salary-row" style="border-top:none">
+        <span class="salary-lbl">Výplata:</span>
+        <input class="salary-inp" type="number" value="${salary||''}" placeholder="0" onchange="setSalary(this.value)">
+        <span class="salary-unit">Kč</span>
+      </div>
+    </div>
+    <div class="mtab-bar">
+      <button class="mtab-btn ${activeE?'active':''}" onclick="switchMonthTab('e')">
+        <span class="mtab-count">${exps.length}</span> Výdaje
+      </button>
+      <button class="mtab-btn ${!activeE?'active':''}" onclick="switchMonthTab('i')">
+        <span class="mtab-count">${incs.length}</span> Příjmy
+      </button>
+    </div>
+    <div class="card" id="month-tx-card">
+      ${activeE ? expRows : incRows}
+    </div>
+  `;
+}
+
+function switchMonthTab(tab) {
+  _monthTab = tab;
+  renderMonth(_curY, _curM);
+  // scroll to top of screen
+  document.getElementById('screen-month').scrollTop = 0;
+}
+
+function setSalary(val) {
+  const md = getMD(_curY, _curM);
+  md.salary = parseFloat(val)||0;
+  save();
+  // soft re-render just stats
+  renderMonth(_curY, _curM);
+}
+
+// ═══════════════════════════════════════════════
+// MODALS: Add / Edit
+// ═══════════════════════════════════════════════
+let _modalType = 'e';
+
+function openAddModal() {
+  _editTx = null;
+  _modalType = _monthTab || 'e';
+  document.getElementById('modal-title').textContent = 'Nová položka';
+  document.getElementById('modal-day').value = new Date().getDate();
+  document.getElementById('modal-desc').value = '';
+  document.getElementById('modal-amount').value = '';
+  document.getElementById('modal-delete-btn').style.display = 'none';
+  const segs = document.querySelectorAll('#modal-type-seg .seg-opt');
+  segs.forEach(b => b.classList.remove('on','type-e','type-i'));
+  segs[_modalType==='e'?0:1].classList.add('on','type-'+_modalType);
+  openModal('modal-add');
+  setTimeout(()=>document.getElementById('modal-desc').focus(), 100);
+}
+
+function openEditModal(id, type) {
+  const md = getMD(_curY, _curM);
+  const arr = type === 'e' ? md.expenses : md.income;
+  const tx = arr.find(t => t.id === id);
+  if (!tx) return;
+  _editTx = {id, type};
+  _modalType = type;
+  document.getElementById('modal-title').textContent = 'Upravit položku';
+  document.getElementById('modal-day').value = tx.day;
+  document.getElementById('modal-desc').value = tx.desc;
+  document.getElementById('modal-amount').value = tx.amount;
+  document.getElementById('modal-delete-btn').style.display = '';
+  // Set seg
+  document.querySelectorAll('#modal-type-seg .seg-opt').forEach((b,i)=>{
+    b.classList.remove('on','type-e','type-i');
+    if ((i===0&&type==='e')||(i===1&&type==='i')) b.classList.add('on', 'type-' + type);
+  });
+  openModal('modal-add');
+}
+
+function setModalType(t, btn) {
+  _modalType = t;
+  document.querySelectorAll('#modal-type-seg .seg-opt').forEach(b => b.classList.remove('on','type-e','type-i'));
+  btn.classList.add('on','type-'+t);
+}
+
+function saveModal() {
+  const day = parseInt(document.getElementById('modal-day').value) || new Date().getDate();
+  const desc = document.getElementById('modal-desc').value.trim();
+  const amount = parseFloat(document.getElementById('modal-amount').value);
+  if (!desc || !amount || amount <= 0) { alert('Vyplňte popis a částku'); return; }
+
+  const md = getMD(_curY, _curM);
+
+  if (_editTx) {
+    // Edit existing
+    const arr = _editTx.type === 'e' ? md.expenses : md.income;
+    const tx = arr.find(t => t.id === _editTx.id);
+    if (tx) {
+      // If type changed, move between arrays
+      if (_editTx.type !== _modalType) {
+        const srcArr = _editTx.type === 'e' ? md.expenses : md.income;
+        const dstArr = _modalType === 'e' ? md.expenses : md.income;
+        const idx = srcArr.findIndex(t => t.id === _editTx.id);
+        if (idx !== -1) {
+          srcArr.splice(idx, 1);
+          dstArr.push({id: _editTx.id, day, desc, amount});
+        }
+      } else {
+        tx.day = day; tx.desc = desc; tx.amount = amount;
+      }
+    }
+  } else {
+    // New
+    const tx = {id: uid(), day, desc, amount};
+    if (_modalType === 'e') md.expenses.push(tx); else md.income.push(tx);
+  }
+
+  save();
+  closeModal('modal-add');
+  renderMonth(_curY, _curM);
+}
+
+function deleteCurrentTx() {
+  if (!_editTx) return;
+  if (!confirm('Smazat tuto položku?')) return;
+  const md = getMD(_curY, _curM);
+  if (_editTx.type === 'e') md.expenses = md.expenses.filter(t => t.id !== _editTx.id);
+  else md.income = md.income.filter(t => t.id !== _editTx.id);
+  save();
+  closeModal('modal-add');
+  renderMonth(_curY, _curM);
+}
+
+// ═══════════════════════════════════════════════
+// INVESTMENTS
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// INVESTMENTS — drill-down view
+// ═══════════════════════════════════════════════
+let _invView = {level: 'top'}; // top | broker | ticker
+
+const EUR_CZK = 25; // approx rate for DIP 48k limit check
+const DIP_LIMIT = 48000;
+
+function renderInv() {
+  if (_invView.level === 'top') renderInvTop();
+  else if (_invView.level === 'broker') renderInvBroker(_invView.broker);
+  else if (_invView.level === 'ticker') renderInvTicker(_invView.broker, _invView.ticker);
+}
+
+function invBack() {
+  if (_invView.level === 'ticker') { _invView = {level:'broker', broker:_invView.broker}; }
+  else { _invView = {level:'top'}; }
+  renderInv(); updateHdr();
+}
+
+function renderInvTop() {
+  const sc = document.getElementById('screen-inv');
+  const invs = db.investments || [];
+
+  // Group by broker
+  const brokers = {};
+  invs.forEach(inv => {
+    const b = inv.broker;
+    if (!brokers[b]) brokers[b] = [];
+    brokers[b].push(inv);
+  });
+
+  // DIP limit per year
+  const dipInvs = brokers['Raiffeisen DIP'] || [];
+  const dipByYear = {};
+  dipInvs.forEach(inv => {
+    const y = inv.date.slice(0,4);
+    if (!dipByYear[y]) dipByYear[y] = 0;
+    const czk = inv.currency === 'CZK' ? inv.quantity*inv.price : inv.quantity*inv.price*EUR_CZK;
+    if (inv.type === 'Nákup') dipByYear[y] += czk;
+  });
+  const dipYearsDone = Object.entries(dipByYear).filter(([y,v]) => v >= DIP_LIMIT);
+
+  const brokerOrder = ['DEGIRO','Interactive Brokers','Raiffeisen DIP','Bitcoin','Ethereum','Jiný'];
+  const allBrokers = brokerOrder.filter(b => brokers[b]);
+  Object.keys(brokers).forEach(b => { if (!brokerOrder.includes(b)) allBrokers.push(b); });
+
+  const brokerCards = allBrokers.map(broker => {
+    const list = brokers[broker];
+    const bcls = broker==='DEGIRO'?'badge-degiro':broker==='Raiffeisen DIP'?'badge-dip':broker==='Bitcoin'||broker==='Ethereum'?'badge-btc':'badge-ib';
+    // Count tickers
+    const tickers = [...new Set(list.map(i=>i.ticker||i.name.slice(0,6)))];
+    // Total by currency
+    const tots = {};
+    list.forEach(inv => {
+      const sign = inv.type==='Prodej'?-1:1;
+      const k = inv.currency;
+      if (!tots[k]) tots[k]=0;
+      tots[k] += inv.quantity*inv.price*sign;
+    });
+    const totStr = Object.entries(tots).map(([c,v]) => fmtCurr(Math.abs(v),c)).join(' + ');
+
+    // DIP badge
+    const dipBadge = broker==='Raiffeisen DIP' && dipYearsDone.length > 0
+      ? `<span class="badge" style="background:rgba(52,216,150,.15);color:var(--grn)">✓ ${dipYearsDone.length}× 48k</span>` : '';
+
+    return `<div class="inv-broker-card" onclick="_invView={level:'broker',broker:'${escH(broker)}'};renderInv();updateHdr()">
+      <div class="inv-broker-hd">
+        <span class="badge ${bcls}">${escH(broker)}</span>
+        ${dipBadge}
+        <span style="margin-left:auto;font-family:var(--mono);font-size:.85rem;font-weight:600">${totStr}</span>
+        <span style="color:var(--txt3);margin-left:8px">›</span>
+      </div>
+      <div class="inv-broker-ft">
+        <span class="inv-meta">${list.length} transakcí</span>
+        <span class="inv-meta">·</span>
+        <span class="inv-meta">${tickers.slice(0,5).join(', ')}${tickers.length>5?'…':''}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Totals — raw by currency
+  let totCZK=0, totEUR=0, totUSD=0, totBTC=0, totETH=0;
+  invs.forEach(inv => {
+    const sign = inv.type==='Prodej'?-1:1;
+    const t = inv.quantity*inv.price*sign;
+    if (inv.currency==='CZK') totCZK+=t;
+    else if (inv.currency==='EUR') totEUR+=t;
+    else if (inv.currency==='USD') totUSD+=t;
+    else if (inv.currency==='BTC') totBTC+=t;
+    else if (inv.currency==='ETH') totETH+=t;
+  });
+
+  // Grand total in CZK (approx)
+  // EUR_CZK = 25 (const), USD_CZK ~23
+  const USD_CZK = 23;
+  const grandTotal = totCZK + totEUR*EUR_CZK + totUSD*USD_CZK
+    + (_btcCzk ? totBTC*_btcCzk : 0)
+    + (_ethCzk ? totETH*_ethCzk : 0);
+  const btcNote = _btcCzk ? `1 BTC ≈ ${Math.round(_btcCzk).toLocaleString('cs-CZ')} Kč` : 'BTC kurz se načítá...';
+  const ethNote = _ethCzk ? `1 ETH ≈ ${Math.round(_ethCzk).toLocaleString('cs-CZ')} Kč` : '';
+
+  sc.innerHTML = `
+    <div class="total-banner">
+      <div class="total-banner-row"><span class="tb-label">💰 Celkem v Kč (odhadem)</span><span class="tb-val c-acc">${fmtFull(grandTotal)}</span></div>
+      <div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">CZK</span><span class="tb-val">${fmtFull(totCZK)}</span></div>
+      <div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">EUR (×25)</span><span class="tb-val c-blue">€${Math.round(totEUR).toLocaleString('cs-CZ')}</span></div>
+      <div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">USD (×23)</span><span class="tb-val c-grn">$${Math.round(totUSD).toLocaleString('cs-CZ')}</span></div>
+      ${totBTC ? `<div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">BTC</span><span class="tb-val" style="color:#f7931a">${totBTC.toFixed(8)}</span></div>` : ''}
+      ${totETH ? `<div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">ETH</span><span class="tb-val" style="color:#627EEA">${totETH.toFixed(6)}</span></div>` : ''}
+      <div class="total-banner-row" style="border-top:1px solid var(--line2);padding-top:6px;margin-top:2px;opacity:.5;font-size:.72rem"><span class="tb-label" style="color:var(--txt3)">${btcNote}${ethNote?' · '+ethNote:''}</span><span></span></div>
+    </div>
+    ${brokerCards || '<div class="empty"><div class="empty-ico">📊</div><p>Žádné investice.</p></div>'}
+  `;
+}
+
+function renderInvBroker(broker) {
+  const sc = document.getElementById('screen-inv');
+  const invs = (db.investments||[]).filter(i=>i.broker===broker).sort((a,b)=>a.date.localeCompare(b.date));
+
+  // Group by ticker
+  const tickers = {};
+  invs.forEach(inv => {
+    const t = inv.ticker || inv.name.slice(0,6);
+    if (!tickers[t]) tickers[t] = {name:inv.name, invs:[]};
+    tickers[t].invs.push(inv);
+  });
+
+  // DIP per-year limit (only for Raiffeisen DIP)
+  let dipSection = '';
+  if (broker === 'Raiffeisen DIP') {
+    const byYear = {};
+    invs.forEach(inv => {
+      const y = inv.date.slice(0,4);
+      if (!byYear[y]) byYear[y] = 0;
+      const czk = inv.currency === 'CZK' ? inv.quantity*inv.price : inv.quantity*inv.price*EUR_CZK;
+      if (inv.type === 'Nákup') byYear[y] += czk;
+    });
+    const rows = Object.entries(byYear).sort().map(([y,v]) => {
+      const pct = Math.min(100, (v/DIP_LIMIT)*100);
+      const done = v >= DIP_LIMIT;
+      return `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-weight:700">${y}</span>
+          <span style="font-family:var(--mono);font-size:.85rem;color:${done?'var(--grn)':'var(--txt2)'}">${Math.round(v).toLocaleString('cs-CZ')} Kč ${done?'✓ SPLNĚNO':'/ 48 000 Kč'}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${done?'var(--grn)':'var(--acc)'}"></div></div>
+      </div>`;
+    }).join('');
+    dipSection = `<div class="card" style="margin-bottom:8px">
+      <div class="card-hd"><span class="card-label">📋 Odpočet DIP — 48 000 Kč / rok</span></div>
+      <div class="card-body">${rows}</div>
+    </div>`;
+  }
+
+  const tickerCards = Object.entries(tickers).map(([tk, {name, invs: tInvs}]) => {
+    const totalQty = tInvs.filter(i=>i.type==='Nákup').reduce((s,i)=>s+i.quantity,0)
+                   - tInvs.filter(i=>i.type==='Prodej').reduce((s,i)=>s+i.quantity,0);
+    const curr = tInvs[0].currency;
+    const totalVal = tInvs.reduce((s,i)=>s+(i.type==='Nákup'?1:-1)*i.quantity*i.price,0);
+    return `<div class="inv-broker-card" onclick="_invView={level:'ticker',broker:'${escH(broker)}',ticker:'${escH(tk)}'};renderInv();updateHdr()">
+      <div class="inv-broker-hd">
+        <span class="inv-ticker">${escH(tk)}</span>
+        <span class="inv-name">${escH(name)}</span>
+        <span style="margin-left:auto;font-family:var(--mono);font-size:.85rem;font-weight:600">${fmtCurr(totalVal,curr)}</span>
+        <span style="color:var(--txt3);margin-left:8px">›</span>
+      </div>
+      <div class="inv-broker-ft">
+        <span class="inv-meta">${tInvs.length} transakcí</span>
+        <span class="inv-meta">·</span>
+        <span class="inv-meta">${totalQty % 1 === 0 ? totalQty : totalQty.toFixed(6)} ks celkem</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  sc.innerHTML = dipSection + (tickerCards || '<div class="empty"><p>Žádné záznamy.</p></div>');
+}
+
+function renderInvTicker(broker, ticker) {
+  const sc = document.getElementById('screen-inv');
+  const invs = (db.investments||[])
+    .filter(i=>i.broker===broker && (i.ticker===ticker||(i.ticker||i.name.slice(0,6))===ticker))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+
+  if (!invs.length) { sc.innerHTML = '<div class="empty"><p>Žádné záznamy.</p></div>'; return; }
+
+  const curr = invs[0].currency;
+  let totalQty = 0, totalVal = 0;
+  const rows = invs.map(inv => {
+    const sign = inv.type==='Nákup'?1:-1;
+    totalQty += sign*inv.quantity;
+    totalVal += sign*inv.quantity*inv.price;
+    const fmtD = (s => { const p=s.split('-'); return p[2]+'. '+p[1]+'. '+p[0]; })(inv.date);
+    const qtyStr = inv.quantity%1===0 ? inv.quantity : inv.quantity.toFixed(6);
+    return `<div class="tx-row" onclick="openEditInv('${inv.id}')" style="cursor:pointer">
+      <div style="flex:1">
+        <div style="font-size:.85rem;font-weight:600;color:${inv.type==='Nákup'?'var(--txt)':'var(--grn)'}">${inv.type} · ${fmtD}</div>
+        <div style="font-size:.78rem;color:var(--txt3);font-family:var(--mono)">${qtyStr} ks × ${fmtCurr(inv.price,curr)}</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:${inv.type==='Nákup'?'var(--red)':'var(--grn)'}">
+        ${inv.type==='Nákup'?'−':'+'}${fmtCurr(inv.quantity*inv.price,curr)}
+      </div>
+      <div class="tx-edit-ico" style="margin-left:6px">✎</div>
+    </div>`;
+  }).join('');
+
+  const tqStr = totalQty%1===0?totalQty:totalQty.toFixed(8);
+  const cryptoCzkRow = (curr==='BTC' && _btcCzk && totalQty > 0)
+    ? `<div class="total-banner-row"><span class="tb-label">Hodnota v Kč</span><span class="tb-val c-acc">${fmtFull(totalQty*_btcCzk)}</span></div>`
+    : (curr==='ETH' && _ethCzk && totalQty > 0)
+    ? `<div class="total-banner-row"><span class="tb-label">Hodnota v Kč</span><span class="tb-val c-acc">${fmtFull(totalQty*_ethCzk)}</span></div>`
+    : '';
+  sc.innerHTML = `
+    <div class="total-banner">
+      <div class="total-banner-row"><span class="tb-label">Aktuální pozice</span><span class="tb-val" style="font-family:var(--mono)">${tqStr} ks</span></div>
+      <div class="total-banner-row"><span class="tb-label">Celkem investováno</span><span class="tb-val">${fmtCurr(totalVal,curr)}</span></div>
+      ${cryptoCzkRow}
+    </div>
+    <div class="card">${rows}</div>
+  `;
+}
+
+let _editInvId = null;
+let _btcCzk = 0;    // fetched live
+let _ethCzk = 0;
+
+// Fetch BTC/ETH price in CZK
+async function fetchCryptoRates() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=czk', {signal: AbortSignal.timeout(5000)});
+    if (!r.ok) return;
+    const d = await r.json();
+    _btcCzk = d.bitcoin?.czk || 0;
+    _ethCzk = d.ethereum?.czk || 0;
+    // Refresh inv view if on inv screen
+    if (_nav === 'inv' && _invView.level === 'top') renderInvTop();
+  } catch(e) {}
+}
+
+function getCustomBrokers() { return db.customBrokers || []; }
+
+function rebuildBrokerSelect(selectedBroker) {
+  const sel = document.getElementById('inv-broker');
+  const fixed = ['DEGIRO','Interactive Brokers','Raiffeisen DIP','Bitcoin','Ethereum'];
+  const custom = getCustomBrokers();
+  sel.innerHTML = fixed.map(b => `<option${selectedBroker===b?' selected':''}>${b}</option>`).join('');
+  if (custom.length) {
+    sel.innerHTML += '<option disabled>──────────</option>';
+    custom.forEach(b => { sel.innerHTML += `<option${selectedBroker===b?' selected':''}>${escH(b)}</option>`; });
+  }
+  sel.innerHTML += '<option value="__jiny__"' + (selectedBroker==='__jiny__'?' selected':'') + '>+ Jiný (nový broker)</option>';
+}
+
+function onBrokerChange() {
+  const val = document.getElementById('inv-broker').value;
+  document.getElementById('inv-custom-broker-field').style.display = val==='__jiny__' ? '' : 'none';
+}
+
+function openAddInv() {
+  _editInvId = null;
+  document.getElementById('inv-modal-title').textContent = 'Přidat investici';
+  document.getElementById('inv-delete-btn').style.display = 'none';
+  document.getElementById('inv-type').value = 'Nákup';
+  document.getElementById('inv-date').value = new Date().toISOString().split('T')[0];
+  rebuildBrokerSelect(null);
+  document.getElementById('inv-custom-broker-field').style.display = 'none';
+  document.getElementById('inv-custom-broker').value = '';
+  document.getElementById('inv-ticker').value = '';
+  document.getElementById('inv-name').value = '';
+  document.getElementById('inv-qty').value = '';
+  document.getElementById('inv-price').value = '';
+  document.getElementById('inv-currency').value = 'EUR';
+  openModal('modal-inv');
+}
+
+function openEditInv(id) {
+  const inv = (db.investments||[]).find(i=>i.id===id);
+  if (!inv) return;
+  _editInvId = id;
+  document.getElementById('inv-modal-title').textContent = 'Upravit investici';
+  document.getElementById('inv-delete-btn').style.display = '';
+  document.getElementById('inv-type').value = inv.type;
+  document.getElementById('inv-date').value = inv.date;
+  rebuildBrokerSelect(inv.broker);
+  document.getElementById('inv-custom-broker-field').style.display = 'none';
+  document.getElementById('inv-custom-broker').value = '';
+  document.getElementById('inv-ticker').value = inv.ticker || '';
+  document.getElementById('inv-name').value = inv.name || '';
+  document.getElementById('inv-qty').value = inv.quantity;
+  document.getElementById('inv-price').value = inv.price;
+  document.getElementById('inv-currency').value = inv.currency || 'EUR';
+  openModal('modal-inv');
+}
+
+function saveInv() {
+  let broker = document.getElementById('inv-broker').value;
+  if (broker === '__jiny__') {
+    broker = document.getElementById('inv-custom-broker').value.trim();
+    if (!broker) { alert('Zadejte název brokera'); return; }
+    if (!db.customBrokers) db.customBrokers = [];
+    if (!db.customBrokers.includes(broker)) db.customBrokers.push(broker);
+  }
+  const inv = {
+    id: _editInvId || uid(),
+    type: document.getElementById('inv-type').value,
+    date: document.getElementById('inv-date').value,
+    broker,
+    ticker: document.getElementById('inv-ticker').value.trim().toUpperCase(),
+    name: document.getElementById('inv-name').value.trim(),
+    quantity: parseFloat(document.getElementById('inv-qty').value)||1,
+    price: parseFloat(document.getElementById('inv-price').value)||0,
+    currency: document.getElementById('inv-currency').value,
+  };
+  if (!inv.date || !inv.name || !inv.price) { alert('Vyplňte datum, název a cenu'); return; }
+  if (!db.investments) db.investments = [];
+  if (_editInvId) {
+    const idx = db.investments.findIndex(i=>i.id===_editInvId);
+    if (idx >= 0) db.investments[idx] = inv;
+  } else {
+    db.investments.push(inv);
+  }
+  _editInvId = null;
+  save();
+  closeModal('modal-inv');
+  renderInv();
+}
+
+function deleteEditInv() {
+  if (!_editInvId) return;
+  if (!confirm('Smazat tuto investici?')) return;
+  db.investments = (db.investments||[]).filter(i=>i.id!==_editInvId);
+  _editInvId = null;
+  save();
+  closeModal('modal-inv');
+  renderInv();
+}
+
+function deleteInv(id) {
+  if (!confirm('Smazat tuto investici?')) return;
+  db.investments = (db.investments||[]).filter(i=>i.id!==id);
+  save(); renderInv();
+}
+
+
+
+
+// ═══════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════
+function renderSettings() {
+  const years = Object.keys(db.transactions).length;
+  let txCount = 0;
+  for (const y in db.transactions) for (const m in db.transactions[y]) {
+    txCount += ((db.transactions[y][m].expenses||[]).length + (db.transactions[y][m].income||[]).length);
+  }
+  const invCount = (db.investments||[]).length;
+  const size = (JSON.stringify(db).length/1024).toFixed(1);
+
+  document.getElementById('screen-settings').innerHTML = `
+    <div class="card">
+      <div class="card-hd"><span class="card-label">Vzhled aplikace</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="position:relative;cursor:pointer" onclick="openIconPicker()">
+            ${db.appIcon
+              ? `<img src="${db.appIcon}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;border:2px solid var(--acc)">`
+              : `<div style="width:52px;height:52px;border-radius:12px;background:var(--bg4);border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:1.5rem">💰</div>`}
+            <div style="position:absolute;bottom:-4px;right:-4px;background:var(--acc);color:#000;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">✎</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:.7rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Ikona aplikace</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="openIconPicker()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--txt);font-size:.78rem;cursor:pointer">Vybrat foto</button>
+              ${db.appIcon ? `<button onclick="removeAppIcon()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--red);font-size:.78rem;cursor:pointer">Odebrat</button>` : ''}
+              ${db.appIcon ? `<button onclick="resetAppIcon()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--txt2);font-size:.78rem;cursor:pointer">Původní 💰</button>` : ''}
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Název aplikace</div>
+          <div style="display:flex;gap:8px">
+            <input id="app-name-inp" type="text" value="${(db.appName||'Fin Deník').replace(/"/g,'&quot;')}" placeholder="Fin Deník" style="flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--txt);font-family:var(--sans);font-size:.85rem">
+            <button onclick="saveAppName()" style="padding:8px 14px;border-radius:6px;border:1px solid var(--acc);background:var(--acc);color:#000;font-weight:700;font-size:.82rem;cursor:pointer">Uložit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-label">Data</span></div>
+      <div class="setting-row" onclick="exportJSON()">
+        <div class="setting-icon yellow">📤</div>
+        <div class="setting-text"><div class="setting-title">Export JSON</div><div class="setting-desc">Stáhnout zálohu všech dat</div></div>
+        <div class="setting-arrow">›</div>
+      </div>
+      <div class="setting-row" style="position:relative">
+        <div class="setting-icon blue">📥</div>
+        <div class="setting-text"><div class="setting-title">Import JSON</div><div class="setting-desc">Načíst dříve exportovaná data</div></div>
+        <div class="setting-arrow">›</div>
+        <input type="file" accept=".json" style="position:absolute;opacity:0;inset:0;cursor:pointer" onchange="importJSON(this)">
+      </div>
+      <div class="setting-row" style="position:relative">
+        <div class="setting-icon green">📊</div>
+        <div class="setting-text"><div class="setting-title">Import Excel</div><div class="setting-desc" id="excel-status">Nahrát soubor Účty-Investice.xlsx</div></div>
+        <div class="setting-arrow">›</div>
+        <input type="file" accept=".xlsx,.xls" style="position:absolute;opacity:0;inset:0;cursor:pointer" onchange="importExcel(this)">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body" style="font-family:var(--mono);font-size:.78rem;color:var(--txt2);line-height:1.8">
+        <div>${years} let záznamu</div>
+        <div>${txCount} transakcí</div>
+        <div>${invCount} investic</div>
+        <div>${size} KB v paměti</div>
+        <div style="margin-top:8px;color:var(--txt3);font-size:.72rem">Data jsou uložena v localStorage prohlížeče. Pravidelně exportujte zálohu.</div>
+      </div>
+    </div>
+  `;
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fin-denik-' + new Date().toISOString().slice(0,10) + '.json';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 1000);
+}
+
+function importJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (!d.transactions) throw new Error('Neplatný formát');
+      db = d;
+      save(); renderSettings();
+      alert('Data importována!');
+    } catch(err) { alert('Chyba: ' + err.message); }
+  };
+  r.readAsText(file);
+}
+
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg || 'Načítám...';
+  document.getElementById('loading-overlay').classList.remove('hidden');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+}
+
+function importExcel(input) {
+  const file = input.files[0]; if (!file) return;
+  showLoading('Čtu soubor...');
+  const r = new FileReader();
+  r.onload = e => {
+    setTimeout(() => {
+      try {
+        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+        const MMAP = {};
+        MONTHS_UP.forEach((m,i) => MMAP[m] = i+1);
+
+        const fmtDate = d => {
+          if (d instanceof Date && !isNaN(d)) {
+            const y = d.getFullYear(), mo = String(d.getMonth()+1).padStart(2,'0'), da = String(d.getDate()).padStart(2,'0');
+            return y + '-' + mo + '-' + da;
+          }
+          if (typeof d === 'string') { const m = d.match(/(\d{4})-(\d{2})-(\d{2})/); if (m) return d.slice(0,10); }
+          return null;
+        };
+
+        // ── 1. Transactions 2016-2026 ──────────────────────────────
+        showLoading('Načítám transakce...');
+        const yearBase = {2016:3,2017:9,2018:15,2019:21,2020:27,2021:33,2022:39,2023:45,2024:51,2025:57,2026:63};
+        const ws = wb.Sheets['2016-2026'];
+        if (!ws) throw new Error('List "2016-2026" nenalezen');
+        const data = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, cellDates:true});
+        const newTx = {};
+
+        for (const [year, bc] of Object.entries(yearBase)) {
+          newTx[year] = {};
+          let cm = null;
+          // bc is 1-indexed; convert to 0-indexed
+          const c_date = bc - 2;  // date col
+          const c_desc = bc - 1;  // description
+          const c_exp  = bc;      // Utraceno (expense, negative)
+          const c_inc  = bc + 2;  // Získáno (income, positive)
+
+          for (let i = 2; i < data.length; i++) {
+            const row = data[i];
+            const dv    = row[c_date];
+            const desc  = row[c_desc];
+            const utrac = row[c_exp];
+            const zisk  = row[c_inc];
+
+            if (typeof dv === 'string' && MMAP[dv.trim()]) {
+              cm = String(MMAP[dv.trim()]);
+              if (!newTx[year][cm]) newTx[year][cm] = {expenses:[], income:[], salary:0};
+              continue;
+            }
+            if (!cm) continue;
+            const dateStr = fmtDate(dv);
+            if (dateStr) {
+              const day = parseInt(dateStr.split('-')[2]);
+              const ua = typeof utrac==='number' ? utrac : parseFloat(utrac);
+              const za = typeof zisk==='number' ? zisk : parseFloat(zisk);
+              if (ua < 0 && desc) newTx[year][cm].expenses.push({id:uid(), day, desc:String(desc).trim(), amount:Math.abs(ua)});
+              if (za > 0) newTx[year][cm].income.push({id:uid(), day, desc:'příjem', amount:za});
+            }
+          }
+        }
+        db.transactions = newTx;
+
+        // ── 2. Salary from CELKEM (all years incl. 2012-2015) ──────
+        showLoading('Načítám výplaty...');
+        if (wb.Sheets['CELKEM']) {
+          const cdata = XLSX.utils.sheet_to_json(wb.Sheets['CELKEM'], {header:1, raw:true, cellDates:true});
+          let cy = null;
+          for (let i = 0; i < cdata.length; i++) {
+            const row = cdata[i];
+            if (typeof row[0]==='number' && row[0]>=2010 && row[0]<=2030) { cy=String(row[0]); continue; }
+            if (typeof row[1]==='number' && row[1]>=2010 && row[1]<=2030) { cy=String(row[1]); continue; }
+            if (!cy) continue;
+            if (typeof row[1]==='string' && MMAP[row[1].trim()]) {
+              const m = String(MMAP[row[1].trim()]);
+              if (!db.transactions[cy]) db.transactions[cy] = {};
+              if (!db.transactions[cy][m]) db.transactions[cy][m] = {expenses:[], income:[], salary:0};
+              if (typeof row[2]==='number' && row[2] > 0) db.transactions[cy][m].salary = row[2];
+            }
+          }
+        }
+
+        // ── 3. Investments ─────────────────────────────────────────
+        showLoading('Načítám investice...');
+        if (wb.Sheets['Investice']) {
+          const idata = XLSX.utils.sheet_to_json(wb.Sheets['Investice'], {header:1, raw:true, cellDates:true});
+          const invs = [];
+
+          const addInv = (type, dateRaw, broker, ticker, name, qtyRaw, priceRaw, currency) => {
+            const d = fmtDate(dateRaw);
+            if (!d) return;
+            const price = typeof priceRaw==='number' ? priceRaw : parseFloat(String(priceRaw||'').replace(',','.'));
+            if (!price || isNaN(price)) return;
+            const qty = typeof qtyRaw==='number' ? Math.abs(qtyRaw) : (parseFloat(String(qtyRaw||'1').replace(',','.').replace(/[^0-9.]/g,'')) || 1);
+            invs.push({id:uid(), type, date:d, broker, ticker:String(ticker||''), name:String(name||''), quantity:qty, price, currency});
+          };
+
+          for (let i = 2; i < idata.length; i++) {
+            const row = idata[i];
+            if (row[0]==='Nákup'||row[0]==='Prodej') addInv(row[0],row[1],'DEGIRO',row[3],row[4],row[2],row[5],'EUR');
+            if (row[7]==='Nákup'||row[7]==='Prodej') addInv(row[7],row[8],'Interactive Brokers',row[10],row[11],row[9],row[12],'USD');
+            if (row[14]==='Nákup'||row[14]==='Prodej') {
+              const pr = row[17];
+              const prStr = String(pr||'');
+              if (prStr.includes('ETH')) {
+                const qty = parseFloat(prStr.replace(',','.').replace(/[^0-9.]/g,''));
+                const d = fmtDate(row[15]);
+                if (qty && d) invs.push({id:uid(),type:row[14],date:d,broker:'Bitcoin',ticker:'ETH',name:'Ethereum',quantity:qty,price:0,currency:'ETH'});
+              } else if (typeof pr==='number' && pr > 0) {
+                addInv(row[14],row[15],'Bitcoin','BTC','Bitcoin',1,pr,'CZK');
+              }
+            }
+            if (row[23]==='Nákup'||row[23]==='Prodej') {
+              const nm = String(row[25]||'');
+              const tk = nm.toLowerCase().includes('s&p') ? 'CSPX' : nm.toLowerCase().includes('world') ? 'IWDA' : 'ETF';
+              addInv(row[23],row[24],'Raiffeisen DIP',tk,nm,row[26],row[27],'EUR');
+            }
+          }
+          db.investments = invs;
+        }
+
+        save();
+        hideLoading();
+        let txTotal = 0;
+        for (const y in db.transactions) for (const m in db.transactions[y]) {
+          txTotal += (db.transactions[y][m].expenses||[]).length + (db.transactions[y][m].income||[]).length;
+        }
+        document.getElementById('excel-status').textContent = `✓ ${Object.keys(db.transactions).length} let, ${txTotal} transakcí, ${(db.investments||[]).length} investic`;
+        renderSettings();
+      } catch(err) {
+        hideLoading();
+        document.getElementById('excel-status').textContent = 'Chyba: ' + err.message;
+        console.error(err);
+      }
+    }, 80);
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function resetData() {
+  if (!confirm('OPRAVDU smazat všechna data? Tato akce je nevratná!')) return;
+  db = {transactions:{}, investments:[]};
+  save(); navTo('home');
+}
+
+// ═══════════════════════════════════════════════
+// Year / modal helpers
+// ═══════════════════════════════════════════════
+function saveNewYear() {
+  const y = parseInt(document.getElementById('add-year-inp').value);
+  if (!y || y < 2000 || y > 2099) { alert('Neplatný rok'); return; }
+  if (!db.transactions[y]) db.transactions[y] = {};
+  save();
+  closeModal('modal-year');
+  renderYears();
+}
+
+function deleteYear(year) {
+  const yd = db.transactions[year] || {};
+  let txCount = 0;
+  for (const m in yd) txCount += ((yd[m].expenses||[]).length + (yd[m].income||[]).length);
+  const msg = txCount > 0
+    ? `Smazat rok ${year} včetně ${txCount} transakcí? Tato akce je nevratná.`
+    : `Smazat rok ${year}?`;
+  if (!confirm(msg)) return;
+  delete db.transactions[year];
+  save();
+  goBack();
+}
+
+function deleteMonth(year, month) {
+  const md = getMD(year, month);
+  const txCount = (md.expenses||[]).length + (md.income||[]).length;
+  const msg = txCount > 0
+    ? `Smazat ${MONTHS[month-1]} ${year} včetně ${txCount} transakcí? Tato akce je nevratná.`
+    : `Smazat ${MONTHS[month-1]} ${year}?`;
+  if (!confirm(msg)) return;
+  if (db.transactions[year]) {
+    delete db.transactions[year][month];
+    if (!Object.keys(db.transactions[year]).length) delete db.transactions[year];
+  }
+  save();
+  goBack();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Close modal on bg click
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); });
+});
+
+// Pre-fill today in inv date
+document.getElementById('inv-date').value = new Date().toISOString().split('T')[0];
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+load();
+navTo('home');
+fetchCryptoRates();
+</script>
+<div class="loading-overlay hidden" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Načítám Excel...</div>
+</div>
+
+<!-- Icon crop modal -->
+<div id="crop-modal-bg" class="hidden">
+  <div id="crop-modal">
+    <div style="font-weight:700;font-size:.9rem">Vybrat výřez ikony</div>
+    <div id="crop-canvas-wrap">
+      <img id="crop-img" src="" alt="">
+      <div class="crop-overlay"></div>
+    </div>
+    <div style="font-size:.75rem;color:var(--txt3)">Zoom</div>
+    <input id="crop-zoom" type="range" min="0.05" max="3" step="0.01" value="1">
+    <div class="crop-btns">
+      <button onclick="closeCropModal()">Zrušit</button>
+      <button onclick="fillCrop()">Vyplnit</button>
+      <button class="primary" onclick="confirmCrop()">Použít</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
