@@ -2,1640 +2,2304 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Fin Deník</title>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#f5c842">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Finance">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Hokejbal">
+<meta name="theme-color" content="#0f1a10">
+<link id="apple-touch-icon" rel="apple-touch-icon" href="">
+<link rel="manifest" href="./manifest.json">
+<title>Hokejbal</title>
 <script>
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(()=>{});
+  navigator.serviceWorker.register('./sw-hokejbal.js', {scope:'./'}).catch(()=>{});
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:     #0a0c10;
-  --bg2:    #111318;
-  --bg3:    #181c26;
-  --bg4:    #1f2438;
-  --line:   #252b40;
-  --line2:  #1a1f30;
-  --acc:    #f5c842;
-  --acc2:   #e05a3a;
-  --grn:    #34d896;
-  --red:    #f05a5a;
-  --blue:   #4c9fff;
-  --purple: #9b7cff;
-  --txt:    #e2e6f0;
-  --txt2:   #7a8299;
-  --txt3:   #454d66;
-  --mono:   'IBM Plex Mono', monospace;
-  --sans:   'Manrope', sans-serif;
-  --r:      10px;
-  --r2:     6px;
-  --safe-b: env(safe-area-inset-bottom, 0px);
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --red:#e63946;--red2:#c1121f;--red-bg:#fde8ea;
+  --green:#2d9e5f;--green2:#1a6640;--green-bg:#d4f0e2;
+  --white:#f8fafc;--bg:#eef1ee;--surface:#ffffff;--surface2:#f3f6f3;
+  --border:#dde5dd;--dark:#0f1a10;--muted:#6b7d6e;--text:#1c2b1e;
+  --gold:#f4b942;--gold-bg:#fef3dc;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html { height: 100%; }
-body { font-family: var(--sans); background: var(--bg); color: var(--txt); height: 100%; overflow: hidden; }
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;}
 
-/* ── App shell ── */
-#app { display: flex; flex-direction: column; height: 100dvh; max-width: 600px; margin: 0 auto; }
+/* HEADER */
+.header{
+  background:var(--dark);border-bottom:3px solid var(--red);
+  padding:0 12px;display:flex;align-items:center;gap:10px;
+  height:58px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 20px rgba(0,0,0,0.4);
+  width:100%;min-width:0;
+}
+.logo-wrap{
+  position:relative;width:44px;height:44px;flex-shrink:0;overflow:visible;
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-img{
+  border-radius:50%;object-fit:contain;
+  position:relative;
+  transition:width 0.2s, height 0.2s;
+}
+.logo-text-wrap{line-height:1.2;min-width:0;flex-shrink:1;}
+.logo-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--white);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.logo-name span{color:var(--red);}
+.logo-sub{font-size:10px;color:var(--green);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:1px;white-space:nowrap;}
+.nav{display:flex;gap:2px;margin-left:auto;flex-shrink:0;}
+.nav-btn{padding:6px 10px;border:none;background:transparent;color:#8fa88f;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;border-radius:4px;transition:all 0.15s;white-space:nowrap;}
+.nav-btn:hover{background:rgba(255,255,255,0.08);color:var(--white);}
+.nav-btn.active{background:var(--red);color:#fff;}
+@media(max-width:480px){
+  .logo-sub{display:none;}
+  .nav-btn{padding:5px 8px;font-size:11px;}
+}
 
-/* ── Header ── */
-.hdr { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--bg2); border-bottom: 1px solid var(--line); flex-shrink: 0; }
-.hdr-back { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg3); color: var(--txt2); font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; flex-shrink: 0; }
-.hdr-back:hover { border-color: var(--acc); color: var(--acc); }
-.hdr-back.hidden { opacity: 0; pointer-events: none; }
-.hdr-title { flex: 1; font-size: 1rem; font-weight: 700; letter-spacing: .01em; }
-.hdr-app-wrap { display: flex; align-items: center; gap: 8px; }
-.hdr-app-icon { width: 44px; height: 44px; border-radius: 11px; object-fit: cover; flex-shrink: 0; }
+/* MAIN */
+.main{max-width:1100px;margin:0 auto;padding:28px 20px;}
+.page-title{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:900;color:var(--dark);text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;border-left:4px solid var(--red);padding-left:12px;}
 
-/* Crop modal */
-#crop-modal-bg { position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;display:flex;align-items:center;justify-content:center; }
-#crop-modal-bg.hidden { display:none; }
-#crop-modal { background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:16px;width:min(360px,92vw);display:flex;flex-direction:column;gap:12px; }
-#crop-canvas-wrap { position:relative;width:100%;aspect-ratio:1;overflow:hidden;border-radius:var(--r2);background:#000;cursor:move;touch-action:none;user-select:none; }
-#crop-img { position:absolute;transform-origin:0 0;will-change:transform; }
-.crop-overlay { position:absolute;inset:0;pointer-events:none; }
-.crop-overlay::after { content:'';position:absolute;inset:25%;border:2px solid var(--acc);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.5); }
-#crop-zoom { width:100%;accent-color:var(--acc); }
-.crop-btns { display:flex;gap:8px; }
-.crop-btns button { flex:1;padding:10px;border-radius:var(--r2);border:1px solid var(--line);background:var(--bg3);color:var(--txt);font-family:var(--sans);font-size:.85rem;font-weight:600;cursor:pointer; }
-.crop-btns button.primary { background:var(--acc);color:#000;border-color:var(--acc); }
-.hdr-sub { font-size: .75rem; color: var(--txt3); font-weight: 500; display: block; margin-top: 1px; }
-.hdr-actions { display: flex; gap: 6px; }
-.icon-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg3); color: var(--txt2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: .9rem; transition: all .15s; }
-.icon-btn:hover { border-color: var(--acc); color: var(--acc); }
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.card-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
 
-/* ── Bottom nav ── */
-.bnav { display: flex; background: var(--bg2); border-top: 1px solid var(--line); flex-shrink: 0; padding-bottom: var(--safe-b); }
-.bnav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 8px; background: none; border: none; color: var(--txt3); font-family: var(--sans); font-size: .65rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: color .15s; border-top: 2px solid transparent; }
-.bnav-btn .ico { font-size: 1.25rem; }
-.bnav-btn.active { color: var(--acc); border-top-color: var(--acc); }
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
+.btn-primary{background:var(--red);color:#fff;}
+.btn-primary:hover{background:var(--red2);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:var(--green2);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--red);color:var(--red);}
+.btn-gold{background:var(--gold);color:#1a1000;}
+.btn-gold:hover{filter:brightness(0.9);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--dark);border-color:var(--dark);}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-danger{background:var(--red-bg);color:var(--red2);border:1px solid #f5c2c6;}
+.btn-danger:hover{background:var(--red);color:#fff;}
 
-/* ── Screen container ── */
-.screens { flex: 1; overflow: hidden; position: relative; }
-.screen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; display: none; flex-direction: column; gap: 12px; }
-.screen.active { display: flex; }
-.screen.active > * { flex-shrink: 0; }
+/* INPUT */
+.input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color 0.15s;}
+.input:focus{border-color:var(--red);}
+.input::placeholder{color:var(--muted);}
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.form-row{display:flex;gap:12px;}
+.form-row .form-group{flex:1;}
 
-/* ── Cards ── */
-.card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
-.card-hd { padding: 12px 14px; border-bottom: 1px solid var(--line2); display: flex; justify-content: space-between; align-items: center; }
-.card-label { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--txt3); }
-.card-body { padding: 12px 14px; }
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;min-width:480px;}
+.tbl th{text-align:left;padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);background:var(--surface2);}
+.tbl th.sort{cursor:pointer;user-select:none;}
+.tbl th.sort:hover{color:var(--red);}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:14px;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr.clk{cursor:pointer;}
+.tbl tr.clk:hover td{background:#fef8f8;}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 
-/* ── Stat grid ── */
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.stat-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
-.stat-box { background: var(--bg3); border-radius: var(--r2); padding: 10px 12px; }
-.stat-lbl { font-size: .67rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--txt3); margin-bottom: 3px; }
-.stat-val { font-family: var(--mono); font-size: .92rem; font-weight: 600; line-height: 1.2; }
-.c-acc { color: var(--acc); }
-.c-grn { color: var(--grn); }
-.c-red { color: var(--red); }
-.c-blue { color: var(--blue); }
-.c-muted { color: var(--txt2); }
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;}
+.badge-green{background:var(--green-bg);color:var(--green2);}
+.badge-red{background:var(--red-bg);color:var(--red2);}
+.badge-gold{background:var(--gold-bg);color:#7a5c1a;}
+.badge-muted{background:var(--surface2);color:var(--muted);}
 
-/* ── Year cards ── */
-.year-card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; cursor: pointer; transition: border-color .15s, background .15s; display: flex; align-items: center; gap: 12px; }
-.year-card:hover { border-color: var(--acc); background: var(--bg3); }
-.year-card:active { background: var(--bg4); }
-.year-num { font-family: var(--mono); font-size: 1.4rem; font-weight: 600; color: var(--acc); min-width: 52px; }
-.year-stats-mini { flex: 1; display: flex; gap: 12px; flex-wrap: wrap; }
-.ys-item { }
-.ys-lbl { font-size: .65rem; color: var(--txt3); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
-.ys-val { font-family: var(--mono); font-size: .82rem; margin-top: 1px; }
-.year-arrow { color: var(--txt3); font-size: .8rem; }
-.bar-track { height: 3px; background: var(--bg4); border-radius: 2px; margin-top: 8px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(15,26,16,0.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(2px);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--dark);text-transform:uppercase;letter-spacing:2px;margin-bottom:20px;border-left:4px solid var(--red);padding-left:10px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;border-top:1px solid var(--border);padding-top:16px;}
 
-/* ── Month list ── */
-.month-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line2); cursor: pointer; transition: background .12s; }
-.month-row:last-child { border-bottom: none; }
-.month-row:hover { background: var(--bg3); }
-.month-row:active { background: var(--bg4); }
-.month-num { font-family: var(--mono); font-size: .75rem; color: var(--txt3); min-width: 18px; }
-.month-name { flex: 1; font-weight: 600; font-size: .9rem; }
-.month-meta { text-align: right; }
-.month-exp { font-family: var(--mono); font-size: .82rem; color: var(--red); }
-.month-sav { font-family: var(--mono); font-size: .72rem; color: var(--grn); margin-top: 1px; }
-.month-sav.neg { color: var(--red); }
-.month-arrow { color: var(--txt3); font-size: .75rem; margin-left: 4px; }
+/* SEASON GRID */
+.season-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;}
+.scard{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:22px 16px;cursor:pointer;transition:all 0.15s;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04);position:relative;}
+.scard:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:0 4px 16px rgba(230,57,70,0.15);}
+.scard-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--dark);}
+.scard-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.scard-del{position:absolute;top:8px;right:8px;background:var(--red-bg);border:none;color:var(--red);border-radius:4px;width:22px;height:22px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.15s;}
+.scard:hover .scard-del{opacity:1;}
+.scard-del:hover{background:var(--red);color:#fff;}
+.scard-add{border-style:dashed;}
+.scard-add .scard-name{color:var(--muted);}
 
-/* ── Transaction list ── */
-.day-header { padding: 8px 14px 4px; font-size: .67rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--txt3); background: var(--bg3); border-bottom: 1px solid var(--line2); }
-.tx-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line2); cursor: pointer; transition: background .12s; }
-.tx-row:last-child { border-bottom: none; }
-.tx-row:hover { background: var(--bg3); }
-.tx-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.tx-dot.e { background: var(--red); }
-.tx-dot.i { background: var(--grn); }
-.tx-desc-wrap { flex: 1; min-width: 0; }
-.tx-desc { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tx-day-badge { font-size: .7rem; color: var(--txt3); margin-top: 1px; }
-.tx-amount { font-family: var(--mono); font-size: .88rem; font-weight: 600; white-space: nowrap; }
-.tx-amount.e { color: var(--red); }
-.tx-amount.i { color: var(--grn); }
-.tx-edit-ico { color: var(--txt3); font-size: .75rem; flex-shrink: 0; }
+/* PLAYER CHECK */
+.pclist{display:flex;flex-direction:column;gap:4px;max-height:340px;overflow-y:auto;padding-right:4px;}
+.pcitem{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:var(--surface2);user-select:none;border:1px solid transparent;transition:all 0.1s;}
+.pcitem:hover{background:#eef2ee;}
+.pcitem.cp{background:#e8f7ef;border-color:#b8e8d0;}
+.pcitem.ca{background:var(--red-bg);border-color:#f5c2c6;}
+.chkbox{width:20px;height:20px;border-radius:4px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.1s;}
+.chkbox.p{background:var(--green);border-color:var(--green);color:#fff;}
+.chkbox.a{background:var(--red);border-color:var(--red);color:#fff;}
 
-/* ── FAB ── */
-.fab { position: fixed; bottom: calc(70px + var(--safe-b)); right: 16px; width: 52px; height: 52px; border-radius: 50%; background: var(--acc); color: #0a0c10; font-size: 1.5rem; font-weight: 700; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(245,200,66,.35); display: flex; align-items: center; justify-content: center; transition: transform .15s, box-shadow .15s; z-index: 100; }
-.fab:hover { transform: scale(1.07); box-shadow: 0 6px 28px rgba(245,200,66,.5); }
-.fab:active { transform: scale(.95); }
-.fab.hidden { display: none; }
+/* MATCH PILL */
+.match-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;margin:2px;}
+.mp-present{background:var(--green-bg);color:var(--green2);}
+.mp-absent{background:var(--red-bg);color:var(--red2);}
 
-/* ── Modal ── */
-.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px); }
-.modal-bg.open { display: flex; }
-.modal { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px 16px 0 0; padding: 20px 16px calc(16px + var(--safe-b)); width: 100%; max-width: 600px; max-height: 88dvh; overflow-y: auto; }
-.modal-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 16px; }
-.modal-close { float: right; background: var(--bg3); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; color: var(--txt2); cursor: pointer; font-family: var(--sans); font-size: .8rem; }
-.modal-close:hover { color: var(--txt); }
+/* FEE BAR */
+.fee-bar{background:var(--border);border-radius:4px;height:5px;margin-top:4px;overflow:hidden;}
+.fee-fill{height:100%;border-radius:4px;background:var(--green);transition:width 0.4s;}
 
-/* ── Form elements ── */
-.field { margin-bottom: 12px; }
-.field-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--txt3); margin-bottom: 5px; display: block; }
-.field-inp { width: 100%; background: var(--bg3); border: 1px solid var(--line); border-radius: var(--r2); padding: 10px 12px; color: var(--txt); font-family: var(--sans); font-size: .92rem; outline: none; transition: border-color .15s; }
-.field-inp:focus { border-color: var(--acc); }
-.field-inp::placeholder { color: var(--txt3); }
-select.field-inp option { background: var(--bg2); }
-.seg { display: flex; background: var(--bg3); border-radius: 8px; padding: 3px; gap: 2px; margin-bottom: 14px; }
-.seg-opt { flex: 1; padding: 8px; border: none; background: none; color: var(--txt2); font-family: var(--sans); font-size: .85rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all .15s; }
-.seg-opt.on { background: var(--bg4); color: var(--txt); }
-.seg-opt.on.type-e { color: var(--red); }
-.seg-opt.on.type-i { color: var(--grn); }
-.btn-row2 { display: flex; gap: 8px; margin-top: 14px; }
-.btn { flex: 1; padding: 12px; border-radius: 8px; border: none; font-family: var(--sans); font-weight: 700; font-size: .9rem; cursor: pointer; transition: all .15s; }
-.btn-primary { background: var(--acc); color: #0a0c10; }
-.btn-primary:hover { background: #ffd454; }
-.btn-danger-ghost { background: rgba(240,90,90,.1); border: 1px solid rgba(240,90,90,.25); color: var(--red); }
-.btn-danger-ghost:hover { background: rgba(240,90,90,.2); }
-.btn-ghost { background: var(--bg3); border: 1px solid var(--line); color: var(--txt2); }
+/* AVATAR */
+.avatar{width:54px;height:54px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#fff;flex-shrink:0;}
 
-/* ── Investments table ── */
-.inv-card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-bottom: 8px; cursor: pointer; transition: border-color .12s; }
-.inv-card:hover { border-color: var(--line); }
-.inv-card-hd { padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
-.inv-ticker { font-family: var(--mono); font-weight: 600; font-size: .9rem; }
-.inv-name { font-size: .78rem; color: var(--txt2); flex: 1; }
-.inv-total { font-family: var(--mono); font-size: .88rem; font-weight: 600; }
-.inv-card-ft { padding: 6px 14px 10px; display: flex; gap: 12px; }
-.inv-meta { font-size: .72rem; color: var(--txt3); }
-.badge { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: .7rem; font-weight: 700; }
-.badge-buy { background: rgba(52,216,150,.12); color: var(--grn); }
-.badge-sell { background: rgba(240,90,90,.12); color: var(--red); }
-.badge-degiro { background: rgba(76,159,255,.12); color: var(--blue); }
-.badge-ib { background: rgba(245,200,66,.12); color: var(--acc); }
-.badge-btc { background: rgba(247,147,26,.12); color: #f7931a; }
-.badge-dip { background: rgba(155,124,255,.12); color: var(--purple); }
+/* SETTINGS */
+.settings-section{margin-bottom:24px;}
+.settings-label{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.logo-preview{width:120px;height:120px;background:var(--surface2);border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:12px;position:relative;}
+.logo-preview img{max-width:100%;max-height:100%;object-fit:contain;}
+.slider-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.slider-row label{font-size:13px;color:var(--muted);width:80px;flex-shrink:0;}
+.slider-row input[type=range]{flex:1;accent-color:var(--red);}
+.slider-row span{width:40px;text-align:right;font-size:13px;font-weight:600;color:var(--dark);}
 
-/* ── Investment broker cards ── */
-.inv-broker-card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 8px; cursor: pointer; transition: background .12s; }
-.inv-broker-card:hover { background: var(--bg3); }
-.inv-broker-hd { padding: 12px 14px; display: flex; align-items: center; gap: 8px; }
-.inv-broker-ft { padding: 4px 14px 10px; display: flex; gap: 8px; }
+.page{display:none;}.page.active{display:block;}
+hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
 
-/* ── Loading overlay ── */
-.loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 9999; backdrop-filter: blur(4px); }
-.loading-overlay.hidden { display: none; }
-.loading-spinner { width: 44px; height: 44px; border: 3px solid var(--bg4); border-top-color: var(--acc); border-radius: 50%; animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: .9rem; color: var(--txt2); letter-spacing: .05em; }
+/* ITEMS */
+.item-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);margin-bottom:5px;}
+.item-row:last-child{margin-bottom:0;}
+.item-name{flex:1;font-size:14px;font-weight:600;color:var(--dark);}
+.item-amounts{font-size:13px;color:var(--muted);}
+.item-amounts strong{color:var(--dark);}
+.item-status{flex-shrink:0;}
+.items-section{margin-bottom:0;}
 
-/* ── Settings ── */
-.setting-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line2); cursor: pointer; transition: background .12s; }
-.setting-row:last-child { border-bottom: none; }
-.setting-row:hover { background: var(--bg3); }
-.setting-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
-.setting-icon.yellow { background: rgba(245,200,66,.12); }
-.setting-icon.blue { background: rgba(76,159,255,.12); }
-.setting-icon.red { background: rgba(240,90,90,.12); }
-.setting-icon.green { background: rgba(52,216,150,.12); }
-.setting-text { flex: 1; }
-.setting-title { font-weight: 600; font-size: .9rem; }
-.setting-desc { font-size: .75rem; color: var(--txt2); margin-top: 2px; }
-.setting-arrow { color: var(--txt3); }
-
-/* ── Empty state ── */
-.empty { text-align: center; padding: 48px 20px; color: var(--txt3); }
-.empty-ico { font-size: 2.8rem; margin-bottom: 10px; }
-.empty p { font-size: .88rem; line-height: 1.5; }
-
-/* ── Total banner ── */
-.total-banner { background: linear-gradient(135deg, var(--bg3) 0%, var(--bg4) 100%); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; }
-.total-banner-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-.total-banner-row:last-child { margin-bottom: 0; }
-.tb-label { font-size: .7rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--txt3); }
-.tb-val { font-family: var(--mono); font-size: .95rem; font-weight: 600; }
-
-/* ── Salary row ── */
-.salary-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(245,200,66,.04); border-top: 1px solid var(--line2); }
-.salary-lbl { font-size: .75rem; color: var(--txt3); font-weight: 600; white-space: nowrap; }
-.salary-inp { flex: 1; background: var(--bg3); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; color: var(--txt); font-family: var(--mono); font-size: .88rem; outline: none; }
-.salary-inp:focus { border-color: var(--acc); }
-.salary-unit { font-size: .75rem; color: var(--txt3); }
-
-/* ── Month tabs ── */
-.mtab-bar { display: flex; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
-.mtab-btn { flex: 1; padding: 12px 8px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--txt3); font-family: var(--sans); font-size: .85rem; font-weight: 700; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.mtab-btn.active { color: var(--txt); border-bottom-color: var(--acc); background: var(--bg3); }
-.mtab-btn:not(.active):hover { color: var(--txt2); background: var(--bg3); }
-.mtab-count { background: var(--bg4); border-radius: 20px; padding: 1px 7px; font-size: .72rem; }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
-
-.sep { border: none; border-top: 1px solid var(--line2); margin: 4px 0; }
-.mt4 { margin-top: 4px; }
-.mt8 { margin-top: 8px; }
-input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 </style>
 </head>
 <body>
-<div id="app">
-  <!-- Header -->
-  <div class="hdr">
-    <button class="icon-btn hdr-back hidden" id="hdr-back" onclick="goBack()">←</button>
-    <div style="flex:1">
-      <div class="hdr-app-wrap" id="hdr-title">💰 Fin Deník</div>
-      <span class="hdr-sub" id="hdr-sub" style="display:none"></span>
+
+<header class="header" id="app-header">
+  <div class="logo-wrap" id="logo-wrap">
+    <img class="logo-img" id="header-logo" src="" alt="logo">
+  </div>
+  <div class="logo-text-wrap">
+    <div class="logo-name" id="header-name">Hokejbal</div>
+    <div class="logo-sub" id="header-sub">NFC Sparta Kladno</div>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('home')">Sezóny</button>
+    <button class="nav-btn" onclick="showPage('players')">Hráči</button>
+    <button class="nav-btn" onclick="showPage('settings')">⚙️ Nastavení</button>
+  </nav>
+</header>
+
+<main class="main">
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="page-title">Sezóny</div>
+  <div class="season-grid" id="season-grid"></div>
+</div>
+
+<!-- PLAYERS -->
+<div id="page-players" class="page">
+  <div class="page-title">Hráči</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+    <input class="input" style="width:220px;" id="player-filter" placeholder="Hledat hráče..." oninput="renderPlayersTable()">
+<button class="btn btn-primary" onclick="openModal('modal-add-player')">+ Přidat hráče</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th style="width:36px;color:var(--muted);">#</th><th id="th-name" onclick="setPlayerSort('name')" style="cursor:pointer;">Jméno</th><th id="th-number" onclick="setPlayerSort('number')" style="cursor:pointer;"># Dres</th><th>Vel.</th><th>Post</th><th></th></tr></thead>
+      <tbody id="players-tbody"></tbody>
+    </table>
     </div>
-    <div class="hdr-actions" id="hdr-actions"></div>
   </div>
-
-  <!-- Screens -->
-  <div class="screens">
-    <!-- S0: Years overview -->
-    <div class="screen active" id="screen-years"></div>
-    <!-- S1: Months in year -->
-    <div class="screen" id="screen-months"></div>
-    <!-- S2: Month detail -->
-    <div class="screen" id="screen-month"></div>
-    <!-- S3: Investments -->
-    <div class="screen" id="screen-inv"></div>
-    <!-- S4: Settings -->
-    <div class="screen" id="screen-settings"></div>
-  </div>
-
-  <!-- FAB -->
-  <button class="fab hidden" id="fab" onclick="openAddModal()">+</button>
-
-  <!-- Bottom nav -->
-  <div class="bnav">
-    <button class="bnav-btn active" id="bnav-home" onclick="navTo('home')"><span class="ico">🏠</span>Přehled</button>
-    <button class="bnav-btn" id="bnav-inv" onclick="navTo('inv')"><span class="ico">📈</span>Investice</button>
-    <button class="bnav-btn" id="bnav-settings" onclick="navTo('settings')"><span class="ico">⚙️</span>Nastavení</button>
+  <!-- DRESY PŘEHLED -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title" style="margin-bottom:14px;">🎽 Dresy — přehled</div>
+    <div id="jerseys-summary"></div>
   </div>
 </div>
 
-<!-- Add / Edit Modal -->
-<div class="modal-bg" id="modal-add">
-  <div class="modal">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="modal-title" id="modal-title">Nová položka</div>
-      <button class="modal-close" onclick="closeModal('modal-add')">✕ Zavřít</button>
-    </div>
-    <div class="seg" id="modal-type-seg">
-      <button class="seg-opt on type-e" onclick="setModalType('e',this)">− Výdaj</button>
-      <button class="seg-opt type-i" onclick="setModalType('i',this)">+ Příjem</button>
-    </div>
-    <div class="field">
-      <label class="field-label">Den v měsíci</label>
-      <input type="number" class="field-inp" id="modal-day" min="1" max="31" placeholder="1–31">
-    </div>
-    <div class="field">
-      <label class="field-label">Popis</label>
-      <input type="text" class="field-inp" id="modal-desc" placeholder="Za co...">
-    </div>
-    <div class="field">
-      <label class="field-label">Částka (Kč)</label>
-      <input type="number" class="field-inp" id="modal-amount" placeholder="0" min="0" step="any">
-    </div>
-    <div class="btn-row2">
-      <button class="btn btn-danger-ghost" id="modal-delete-btn" style="display:none;flex:0 0 auto;padding:12px 18px" onclick="deleteCurrentTx()">🗑</button>
-      <button class="btn btn-primary" onclick="saveModal()">Uložit</button>
+<!-- SEASON DETAIL -->
+<div id="page-season" class="page">
+  <button class="btn btn-ghost" style="margin-bottom:20px;" onclick="showPage('home')">← Zpět</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px;">
+    <div class="page-title" id="season-detail-title" style="margin-bottom:0;"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-green btn-sm" onclick="openSeasonPickPlayers()">📋 Ze seznamu</button>
+      <button class="btn btn-gold btn-sm" onclick="openBulkFee()">💰 Hromadný poplatek</button>
+      <button class="btn btn-secondary btn-sm" onclick="openSeasonPaidSummary()">📊 Zaplaceno v sezóně</button>
     </div>
   </div>
-</div>
-
-<!-- Add/Edit Investment Modal -->
-<div class="modal-bg" id="modal-inv">
-  <div class="modal">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="modal-title" id="inv-modal-title">Přidat investici</div>
-      <button class="modal-close" onclick="closeModal('modal-inv')">✕</button>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="card-title" style="margin:0;">Zápasy</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddMatch()">+ Přidat zápas</button>
     </div>
-    <div class="field">
-      <label class="field-label">Typ</label>
-      <select class="field-inp" id="inv-type"><option>Nákup</option><option>Prodej</option></select>
-    </div>
-    <div class="field">
-      <label class="field-label">Datum</label>
-      <input type="date" class="field-inp" id="inv-date">
-    </div>
-    <div class="field">
-      <label class="field-label">Broker</label>
-      <select class="field-inp" id="inv-broker" onchange="onBrokerChange()">
-        <option>DEGIRO</option><option>Interactive Brokers</option><option>Raiffeisen DIP</option><option>Bitcoin</option><option>Ethereum</option>
-        <option disabled>──────────</option>
-        <option id="inv-broker-custom-opts"></option>
-        <option value="__jiny__">+ Jiný (nový broker)</option>
-      </select>
-    </div>
-    <div class="field" id="inv-custom-broker-field" style="display:none">
-      <label class="field-label">Název brokera</label>
-      <input type="text" class="field-inp" id="inv-custom-broker" placeholder="Název brokera">
-    </div>
-    <div class="field">
-      <label class="field-label">Ticker</label>
-      <input type="text" class="field-inp" id="inv-ticker" placeholder="VWCE">
-    </div>
-    <div class="field">
-      <label class="field-label">Název aktiva</label>
-      <input type="text" class="field-inp" id="inv-name" placeholder="Vanguard FTSE All-World">
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="field">
-        <label class="field-label">Počet kusů</label>
-        <input type="number" class="field-inp" id="inv-qty" placeholder="1" step="any">
-      </div>
-      <div class="field">
-        <label class="field-label">Cena / ks</label>
-        <input type="number" class="field-inp" id="inv-price" placeholder="0" step="any">
+    <div id="matches-list" style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px;"></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="padding:14px 16px 0;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+        <input class="input" style="flex:1;min-width:160px;" id="sd-filter" placeholder="Hledat..." oninput="renderSeasonTable()">
+        <button id="sd-debt-btn" class="btn btn-secondary btn-sm" onclick="toggleSeasonDebt()" style="white-space:nowrap;">💸 Největší dluh</button>
       </div>
     </div>
-    <div class="field">
-      <label class="field-label">Měna</label>
-      <select class="field-inp" id="inv-currency">
-        <option>CZK</option><option>EUR</option><option>USD</option><option>BTC</option><option>ETH</option>
-      </select>
-    </div>
-    <div class="btn-row2">
-      <button class="btn btn-sec" id="inv-delete-btn" style="display:none;color:var(--red)" onclick="deleteEditInv()">🗑 Smazat</button>
-      <button class="btn btn-primary" onclick="saveInv()">Uložit</button>
+    <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr>
+        <th style="width:36px;">#</th>
+        <th id="sth-name" onclick="setSeasonSort('name')" style="cursor:pointer;">Jméno</th><th id="sth-number" onclick="setSeasonSort('number')" style="cursor:pointer;">Dres</th><th id="sth-games" onclick="setSeasonSort('games')" style="cursor:pointer;">Zápasy</th><th id="sth-finance" onclick="setSeasonSort('paid')" style="cursor:pointer;">Finance</th><th>Stav</th><th></th>
+      </tr></thead>
+      <tbody id="season-tbody"></tbody>
+    </table>
     </div>
   </div>
 </div>
 
-<!-- Add Year Modal -->
-<div class="modal-bg" id="modal-year">
-  <div class="modal">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="modal-title">Přidat rok</div>
-      <button class="modal-close" onclick="closeModal('modal-year')">✕</button>
+<!-- PLAYER DETAIL -->
+<div id="page-player" class="page">
+  <button class="btn btn-ghost" id="player-back-btn" style="margin-bottom:20px;">← Zpět</button>
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+    <div class="avatar" id="player-avatar"></div>
+    <div>
+      <div class="page-title" style="margin:0;" id="player-detail-name"></div>
+      <div style="color:var(--muted);font-size:13px;" id="player-detail-sub"></div>
     </div>
-    <div class="field">
-      <label class="field-label">Rok</label>
-      <input type="number" class="field-inp" id="add-year-inp" min="2000" max="2099" placeholder="2026">
+    <div style="display:flex;flex-direction:column;gap:6px;margin-left:auto;align-items:flex-end;">
+      <button class="btn btn-ghost btn-sm" id="player-edit-btn">✏️ Upravit</button>
+      <button class="btn btn-danger btn-sm" id="player-debt-btn" onclick="openPlayerDebt()">💳 Celkový dluh</button>
     </div>
-    <div class="btn-row2">
-      <button class="btn btn-primary" onclick="saveNewYear()">Přidat</button>
+  </div>
+  <div id="player-seasons-list"></div>
+</div>
+
+<!-- MODAL: PLAYER TOTAL DEBT -->
+<div id="modal-player-debt" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-player-debt')">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-title">Celkový dluh hráče</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:18px;" id="player-debt-sub"></div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:120px;background:var(--red-bg);border-radius:10px;padding:14px 16px;text-align:center;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red2);margin-bottom:5px;">Celkem dluží</div>
+        <div id="debt-total-remaining" style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:var(--red2);"></div>
+      </div>
+      <div style="flex:1;min-width:120px;background:var(--green-bg);border-radius:10px;padding:14px 16px;text-align:center;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green2);margin-bottom:5px;">Celkem zaplaceno</div>
+        <div id="debt-total-paid" style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:var(--green2);"></div>
+      </div>
+      <div style="flex:1;min-width:120px;background:var(--gold-bg);border-radius:10px;padding:14px 16px;text-align:center;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7a5c1a;margin-bottom:5px;">Celková částka</div>
+        <div id="debt-total-amount" style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:#7a5c1a;"></div>
+      </div>
+    </div>
+    <div id="debt-seasons-list" style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-player-debt')">Zavřít</button>
     </div>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-// ═══════════════════════════════════════════════
-// DATA
-// ═══════════════════════════════════════════════
-const SK = 'findenik3';
-const MONTHS = ['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
-const MONTHS_UP = ['LEDEN','ÚNOR','BŘEZEN','DUBEN','KVĚTEN','ČERVEN','ČERVENEC','SRPEN','ZÁŘÍ','ŘÍJEN','LISTOPAD','PROSINEC'];
+<!-- SETTINGS -->
+<div id="page-settings" class="page">
+  <div class="page-title">Nastavení</div>
 
-let db = { transactions: {}, investments: [] };
-
-function load() {
-  const r = localStorage.getItem(SK);
-  if (r) try { db = JSON.parse(r); } catch(e) {}
-}
-function save() { localStorage.setItem(SK, JSON.stringify(db)); }
-function uid() { return Math.random().toString(36).slice(2,10); }
-
-function buildAppTitle() {
-  const name = db.appName || 'Fin Deník';
-  const icon = db.appIcon;
-  const imgTag = icon ? `<img class="hdr-app-icon" src="${icon}" alt="">` : '💰';
-  return `${imgTag} <span style="font-weight:700;font-size:1rem;letter-spacing:.01em">${name}</span>`;
-}
-
-// ── Crop modal state ──
-let _cropImgData = null;
-let _cropX = 0, _cropY = 0, _cropScale = 1;
-let _cropDragging = false, _cropLastX = 0, _cropLastY = 0;
-
-function openIconPicker() {
-  const inp = document.createElement('input');
-  inp.type = 'file'; inp.accept = 'image/*';
-  inp.onchange = e => {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => openCropModal(ev.target.result);
-    r.readAsDataURL(f);
-  };
-  inp.click();
-}
-
-function openCropModal(src) {
-  _cropX = 0; _cropY = 0; _cropScale = 1;
-  const bg = document.getElementById('crop-modal-bg');
-  const img = document.getElementById('crop-img');
-  const zoom = document.getElementById('crop-zoom');
-  img.onload = () => {
-    _cropImgData = src;
-    // Auto-fit: scale so the shorter side fills the crop area
-    const wrap = document.getElementById('crop-canvas-wrap');
-    const wrapSize = wrap.offsetWidth;
-    const fitScale = wrapSize / Math.min(img.naturalWidth, img.naturalHeight);
-    // start at fit scale, clamp between slider min/max
-    _cropScale = Math.max(0.05, Math.min(3, fitScale));
-    // center the image
-    _cropX = (wrapSize - img.naturalWidth * _cropScale) / 2;
-    _cropY = (wrapSize - img.naturalHeight * _cropScale) / 2;
-    zoom.min = Math.min(0.05, _cropScale * 0.5).toFixed(3);
-    zoom.max = Math.max(3, _cropScale * 2).toFixed(1);
-    zoom.value = _cropScale;
-    applyTransform();
-    bg.classList.remove('hidden');
-  };
-  img.src = src;
-
-  // Drag events
-  const wrap = document.getElementById('crop-canvas-wrap');
-  wrap.onpointerdown = ev => { _cropDragging=true; _cropLastX=ev.clientX; _cropLastY=ev.clientY; wrap.setPointerCapture(ev.pointerId); };
-  wrap.onpointermove = ev => {
-    if (!_cropDragging) return;
-    _cropX += ev.clientX - _cropLastX; _cropY += ev.clientY - _cropLastY;
-    _cropLastX = ev.clientX; _cropLastY = ev.clientY;
-    applyTransform();
-  };
-  wrap.onpointerup = () => { _cropDragging = false; };
-  zoom.oninput = () => { _cropScale = parseFloat(zoom.value); applyTransform(); };
-}
-
-function applyTransform() {
-  const img = document.getElementById('crop-img');
-  img.style.transform = `translate(${_cropX}px,${_cropY}px) scale(${_cropScale})`;
-}
-
-function fillCrop() {
-  const img = document.getElementById('crop-img');
-  const wrap = document.getElementById('crop-canvas-wrap');
-  const zoom = document.getElementById('crop-zoom');
-  const wrapSize = wrap.offsetWidth;
-  // Scale so the shorter side fills the yellow crop box (inset 25% = 50% of wrap)
-  const cropBoxSize = wrapSize * 0.5;
-  _cropScale = cropBoxSize / Math.min(img.naturalWidth, img.naturalHeight);
-  _cropX = (wrapSize - img.naturalWidth * _cropScale) / 2;
-  _cropY = (wrapSize - img.naturalHeight * _cropScale) / 2;
-  zoom.min = Math.min(0.05, _cropScale * 0.5).toFixed(3);
-  zoom.max = Math.max(3, _cropScale * 2).toFixed(1);
-  zoom.value = _cropScale;
-  applyTransform();
-}
-
-function closeCropModal() {
-  document.getElementById('crop-modal-bg').classList.add('hidden');
-}
-
-function confirmCrop() {
-  const wrap = document.getElementById('crop-canvas-wrap');
-  const img = document.getElementById('crop-img');
-  const size = wrap.offsetWidth;
-  const canvas = document.createElement('canvas');
-  canvas.width = 128; canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  ctx.beginPath(); ctx.roundRect(0,0,128,128,20); ctx.clip();
-  const scaleRatio = 128 / size;
-  const iw = img.naturalWidth * _cropScale * scaleRatio;
-  const ih = img.naturalHeight * _cropScale * scaleRatio;
-  const dx = _cropX * scaleRatio;
-  const dy = _cropY * scaleRatio;
-  ctx.drawImage(img, dx, dy, iw, ih);
-  db.appIcon = canvas.toDataURL('image/png');
-  save();
-  closeCropModal();
-  updateHeader();
-}
-
-function removeAppIcon() {
-  delete db.appIcon;
-  save();
-  updateHeader();
-  renderSettings();
-}
-
-function resetAppIcon() {
-  delete db.appIcon;
-  save();
-  updateHeader();
-  renderSettings();
-}
-
-function saveAppName() {
-  const val = document.getElementById('app-name-inp').value.trim();
-  db.appName = val || 'Fin Deník';
-  save();
-  updateHeader();
-  renderSettings();
-}
-
-function getMD(y, m) {
-  y = String(y); m = String(m);
-  if (!db.transactions[y]) db.transactions[y] = {};
-  if (!db.transactions[y][m]) db.transactions[y][m] = { expenses:[], income:[], salary:0 };
-  return db.transactions[y][m];
-}
-
-function fmt(n) {
-  if (Math.abs(n) >= 1000000) return (n/1000000).toFixed(1) + ' M Kč';
-  if (Math.abs(n) >= 1000) return Math.round(n/100)/10 + ' tis';
-  return Math.round(n).toLocaleString('cs-CZ') + ' Kč';
-}
-function fmtFull(n) { return Math.round(n).toLocaleString('cs-CZ') + ' Kč'; }
-function fmtCurr(n, c) {
-  if (c==='CZK') return fmtFull(n);
-  if (c==='USD') return '$' + n.toLocaleString('en-US',{maximumFractionDigits:2});
-  if (c==='EUR') return '€' + n.toLocaleString('en-US',{maximumFractionDigits:2});
-  return n + ' ' + c;
-}
-function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ═══════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════
-let _nav = 'home';   // home | inv | settings
-let _stack = [];     // [{screen, year?, month?}]
-let _editTx = null;  // {id, type} for editing
-let _curY = null, _curM = null;
-
-function navTo(section) {
-  _nav = section;
-  _stack = [];
-  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('bnav-' + (section === 'home' ? 'home' : section)).classList.add('active');
-
-  if (section === 'home') { showScreen('years'); renderYears(); }
-  if (section === 'inv')  { _invView = {level:'top'}; showScreen('inv');  renderInv(); }
-  if (section === 'settings') { showScreen('settings'); renderSettings(); }
-
-  updateHdr();
-}
-
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-}
-
-function openYear(year) {
-  _stack.push('years');
-  _curY = year; _curM = null;
-  showScreen('months');
-  renderMonths(year);
-  updateHdr();
-}
-
-function openMonth(year, month) {
-  _stack.push('months');
-  _curY = year; _curM = month;
-  showScreen('month');
-  renderMonth(year, month);
-  updateHdr();
-}
-
-function goBack() {
-  if (_nav === 'inv' && _invView.level !== 'top') { invBack(); return; }
-  const prev = _stack.pop();
-  if (prev === 'years') { _curM = null; showScreen('years'); renderYears(); }
-  if (prev === 'months') { _curM = null; showScreen('months'); renderMonths(_curY); }
-  updateHdr();
-}
-
-function updateHdr() {
-  const back = document.getElementById('hdr-back');
-  const title = document.getElementById('hdr-title');
-  const sub = document.getElementById('hdr-sub');
-  const actions = document.getElementById('hdr-actions');
-  const fab = document.getElementById('fab');
-
-  const invDeep = _nav === 'inv' && _invView.level !== 'top';
-  back.classList.toggle('hidden', _stack.length === 0 && !invDeep);
-
-  if (_nav === 'inv') {
-    if (_invView.level === 'top') title.textContent = '📈 Investice';
-    else if (_invView.level === 'broker') title.textContent = _invView.broker;
-    else title.textContent = _invView.ticker;
-    sub.style.display = 'none';
-    actions.innerHTML = '';
-    fab.className = _invView.level === 'top' ? 'fab' : 'fab hidden';
-    if (_invView.level === 'top') fab.onclick = openAddInv;
-    return;
-  }
-  if (_nav === 'settings') {
-    title.className = 'hdr-app-wrap';
-    title.innerHTML = buildAppTitle();
-    sub.style.display = 'none';
-    actions.innerHTML = '';
-    fab.className = 'fab hidden';
-    return;
-  }
-
-  // Home stack
-  if (_stack.length === 0) {
-    title.className = 'hdr-app-wrap';
-    title.innerHTML = buildAppTitle();
-    sub.style.display = 'none';
-    actions.innerHTML = `<button class="icon-btn" onclick="openModal('modal-year')" title="Přidat rok">＋</button>`;
-    fab.className = 'fab hidden';
-  } else if (_stack.length === 1) {
-    // on months screen
-    title.className = 'hdr-title';
-    title.textContent = _curY;
-    sub.style.display = 'none';
-    actions.innerHTML = `<button class="icon-btn" onclick="deleteYear(${_curY})" title="Smazat rok" style="color:var(--red)">🗑</button>`;
-    fab.className = 'fab hidden';
-  } else {
-    // on month detail
-    title.className = 'hdr-title';
-    title.textContent = MONTHS[_curM - 1] + ' ' + _curY;
-    sub.style.display = 'none';
-    actions.innerHTML = `<button class="icon-btn" onclick="deleteMonth(${_curY},${_curM})" title="Smazat měsíc" style="color:var(--red)">🗑</button>`;
-    fab.className = 'fab';
-    fab.onclick = openAddModal;
-  }
-}
-
-// ═══════════════════════════════════════════════
-// RENDER: Years
-// ═══════════════════════════════════════════════
-function renderYears() {
-  const years = Object.keys(db.transactions).map(Number).sort((a,b)=>b-a);
-  let totalSal=0, totalExp=0, totalInc=0, totalSaved=0;
-
-  const sc = document.getElementById('screen-years');
-
-  if (!years.length) {
-    sc.innerHTML = `<div class="empty"><div class="empty-ico">📭</div><p>Žádná data.<br>Importujte data v Nastavení nebo přidejte rok pomocí ＋</p></div>`;
-    return;
-  }
-
-  const SAVED_FROM = 2016; // roky před tímto nemají data výdajů
-
-  const yearCards = years.map(y => {
-    const yd = db.transactions[y] || {};
-    let yExp=0, yInc=0, ySal=0;
-    for (const m in yd) {
-      yExp += (yd[m].expenses||[]).reduce((s,e)=>s+e.amount,0);
-      yInc += (yd[m].income||[]).reduce((s,e)=>s+e.amount,0);
-      ySal += yd[m].salary||0;
-    }
-    const hasSaved = y >= SAVED_FROM;
-    const saved = ySal - yExp + yInc;
-    totalSal += ySal;
-    if (hasSaved) { totalExp += yExp; totalInc += yInc; totalSaved += saved; }
-    const pct = ySal ? Math.max(0, Math.min(100, hasSaved ? saved/ySal*100 : 100)) : 0;
-    const clr = saved >= 0 ? 'var(--grn)' : 'var(--red)';
-    const savedHtml = hasSaved
-      ? `<div class="ys-item"><div class="ys-lbl">Uspořeno</div><div class="ys-val" style="color:${clr}">${saved>=0?'+':''}${fmt(saved)}</div></div>`
-      : '';
-    const expHtml = hasSaved
-      ? `<div class="ys-item"><div class="ys-lbl">Výdaje</div><div class="ys-val c-red">−${fmt(yExp)}</div></div>`
-      : '';
-    return `<div class="year-card" onclick="openYear(${y})">
-      <div class="year-num">${y}</div>
-      <div class="year-stats-mini">
-        <div class="ys-item"><div class="ys-lbl">Výplata</div><div class="ys-val c-acc">${fmt(ySal)}</div></div>
-        ${expHtml}
-        ${savedHtml}
-      </div>
-      <div class="year-arrow">›</div>
-      <div style="position:absolute;left:68px;right:50px;bottom:8px" class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${clr}"></div></div>
-    </div>`;
-  }).join('');
-
-  sc.innerHTML = `
-    <div class="total-banner">
-      <div class="total-banner-row"><span class="tb-label">Vyděláno celkem</span><span class="tb-val c-acc">${fmtFull(totalSal)}</span></div>
-      <div class="total-banner-row"><span class="tb-label">Výdaje celkem</span><span class="tb-val c-red">−${fmtFull(totalExp)}</span></div>
-      <div class="total-banner-row"><span class="tb-label">Příjmy celkem</span><span class="tb-val c-grn">+${fmtFull(totalInc)}</span></div>
-      <div class="total-banner-row" style="border-top:1px solid var(--line2);padding-top:8px;margin-top:6px"><span class="tb-label">Ušetřeno celkem <span style="color:var(--txt3);font-size:.7em">(od ${SAVED_FROM})</span></span><span class="tb-val" style="color:${totalSaved>=0?'var(--grn)':'var(--red)'}">${totalSaved>=0?'+':''}${fmtFull(totalSaved)}</span></div>
+  <div class="card">
+    <div class="card-title">Název aplikace</div>
+    <div class="form-group">
+      <label class="form-label">Název (zobrazí se v hlavičce)</label>
+      <input class="input" id="set-app-name" placeholder="Hokejbal">
     </div>
-    <div style="position:relative">${yearCards}</div>
-  `;
-}
+    <button class="btn btn-primary" onclick="saveAppSettings()">Uložit název</button>
+  </div>
 
-// ═══════════════════════════════════════════════
-// RENDER: Months
-// ═══════════════════════════════════════════════
-function renderMonths(year) {
-  const sc = document.getElementById('screen-months');
-  const yd = db.transactions[year] || {};
-  let yExp=0, yInc=0, ySal=0;
-  const hasSaved = year >= 2016;
-
-  const rows = MONTHS.map((mn, i) => {
-    const m = String(i+1);
-    const md = yd[m] || {expenses:[],income:[],salary:0};
-    const exp = (md.expenses||[]).reduce((s,e)=>s+e.amount,0);
-    const inc = (md.income||[]).reduce((s,e)=>s+e.amount,0);
-    const sal = md.salary||0;
-    const saved = sal - exp + inc;
-    yExp+=exp; yInc+=inc; ySal+=sal;
-    const hasTx = (md.expenses||[]).length + (md.income||[]).length > 0;
-    const savedStr = (hasSaved && sal) ? (saved>=0?'+':'')+fmtFull(saved) : '';
-    const savedCls = saved<0?'neg':'';
-    return `<div class="month-row" onclick="openMonth(${year},${i+1})">
-      <div class="month-num">${String(i+1).padStart(2,'0')}</div>
-      <div class="month-name">${mn}</div>
-      ${hasTx ? `<div class="month-meta">
-        ${hasSaved ? `<div class="month-exp">−${fmtFull(exp)}</div>` : ''}
-        ${savedStr ? `<div class="month-sav ${savedCls}">${savedStr}</div>` : ''}
-      </div>` : '<div class="month-meta" style="color:var(--txt3);font-size:.75rem">—</div>'}
-      <div class="month-arrow">›</div>
-    </div>`;
-  }).join('');
-
-  const totalSaved = ySal - yExp + yInc;
-  const savedRow = hasSaved
-    ? `<div class="total-banner-row"><span class="tb-label">Ušetřeno rok</span><span class="tb-val" style="color:${totalSaved>=0?'var(--grn)':'var(--red)'}">${totalSaved>=0?'+':''}${fmtFull(totalSaved)}</span></div>`
-    : '';
-  sc.innerHTML = `
-    <div class="total-banner">
-      <div class="total-banner-row"><span class="tb-label">Výplata rok</span><span class="tb-val c-acc">${fmtFull(ySal)}</span></div>
-      ${hasSaved ? `<div class="total-banner-row"><span class="tb-label">Výdaje rok</span><span class="tb-val c-red">−${fmtFull(yExp)}</span></div>` : ''}
-      ${savedRow}
-    </div>
-    <div class="card"><div class="card-hd"><span class="card-label">Měsíce</span></div>${rows}</div>
-  `;
-}
-
-// ═══════════════════════════════════════════════
-// RENDER: Month detail
-// ═══════════════════════════════════════════════
-let _monthTab = 'e'; // 'e' = výdaje, 'i' = příjmy
-
-function renderMonth(year, month) {
-  const sc = document.getElementById('screen-month');
-  const md = getMD(year, month);
-  const exps = [...(md.expenses||[])].sort((a,b)=>a.day-b.day);
-  const incs = [...(md.income||[])].sort((a,b)=>a.day-b.day);
-  const salary = md.salary||0;
-  const totalExp = exps.reduce((s,e)=>s+e.amount,0);
-  const totalInc = incs.reduce((s,e)=>s+e.amount,0);
-  const saved = salary - totalExp + totalInc;
-
-  // Expenses grouped by day
-  const byDay = {};
-  exps.forEach(tx => { const k=tx.day; if(!byDay[k]) byDay[k]=[]; byDay[k].push(tx); });
-  const days = Object.keys(byDay).map(Number).sort((a,b)=>a-b);
-
-  const expRows = days.map(d => {
-    const hdr = `<div class="day-header">${d}. ${MONTHS[month-1].toLowerCase()}</div>`;
-    const items = byDay[d].map(tx => `
-      <div class="tx-row" onclick="openEditModal('${tx.id}','e')">
-        <div class="tx-desc-wrap"><div class="tx-desc">${escH(tx.desc)}</div></div>
-        <div class="tx-amount e">−${fmtFull(tx.amount)}</div>
-        <div class="tx-edit-ico">✎</div>
-      </div>`).join('');
-    return hdr + items;
-  }).join('') || '<div class="empty" style="padding:32px"><div class="empty-ico">✅</div><p>Žádné výdaje.</p></div>';
-
-  // Income — flat list, no dates
-  const incRows = incs.map(tx => `
-    <div class="tx-row" onclick="openEditModal('${tx.id}','i')">
-      <div class="tx-desc-wrap"><div class="tx-desc">${escH(tx.desc)}</div></div>
-      <div class="tx-amount i">+${fmtFull(tx.amount)}</div>
-      <div class="tx-edit-ico">✎</div>
-    </div>`).join('') || '<div class="empty" style="padding:32px"><div class="empty-ico">💸</div><p>Žádné příjmy.</p></div>';
-
-  const activeE = _monthTab==='e';
-  const hasSaved = _curY >= 2016;
-
-  sc.innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-lbl">Výdaje</div><div class="stat-val c-red">−${fmtFull(totalExp)}</div></div>
-      <div class="stat-box"><div class="stat-lbl">Příjmy</div><div class="stat-val c-grn">+${fmtFull(totalInc)}</div></div>
-      ${salary ? `<div class="stat-box"><div class="stat-lbl">Výplata</div><div class="stat-val c-acc">${fmtFull(salary)}</div></div>` : '<div class="stat-box"><div class="stat-lbl">Výplata</div><div class="stat-val c-muted">—</div></div>'}
-      ${hasSaved ? `<div class="stat-box"><div class="stat-lbl">Ušetřeno</div><div class="stat-val" style="color:${saved>=0?'var(--grn)':'var(--red)'}">${saved>=0?'+':''}${fmtFull(saved)}</div></div>` : ''}
-    </div>
-    <div class="card">
-      <div class="salary-row" style="border-top:none">
-        <span class="salary-lbl">Výplata:</span>
-        <input class="salary-inp" type="number" value="${salary||''}" placeholder="0" onchange="setSalary(this.value)">
-        <span class="salary-unit">Kč</span>
-      </div>
-    </div>
-    <div class="mtab-bar">
-      <button class="mtab-btn ${activeE?'active':''}" onclick="switchMonthTab('e')">
-        <span class="mtab-count">${exps.length}</span> Výdaje
-      </button>
-      <button class="mtab-btn ${!activeE?'active':''}" onclick="switchMonthTab('i')">
-        <span class="mtab-count">${incs.length}</span> Příjmy
-      </button>
-    </div>
-    <div class="card" id="month-tx-card">
-      ${activeE ? expRows : incRows}
-    </div>
-  `;
-}
-
-function switchMonthTab(tab) {
-  _monthTab = tab;
-  renderMonth(_curY, _curM);
-  // scroll to top of screen
-  document.getElementById('screen-month').scrollTop = 0;
-}
-
-function setSalary(val) {
-  const md = getMD(_curY, _curM);
-  md.salary = parseFloat(val)||0;
-  save();
-  // soft re-render just stats
-  renderMonth(_curY, _curM);
-}
-
-// ═══════════════════════════════════════════════
-// MODALS: Add / Edit
-// ═══════════════════════════════════════════════
-let _modalType = 'e';
-
-function openAddModal() {
-  _editTx = null;
-  _modalType = _monthTab || 'e';
-  document.getElementById('modal-title').textContent = 'Nová položka';
-  document.getElementById('modal-day').value = new Date().getDate();
-  document.getElementById('modal-desc').value = '';
-  document.getElementById('modal-amount').value = '';
-  document.getElementById('modal-delete-btn').style.display = 'none';
-  const segs = document.querySelectorAll('#modal-type-seg .seg-opt');
-  segs.forEach(b => b.classList.remove('on','type-e','type-i'));
-  segs[_modalType==='e'?0:1].classList.add('on','type-'+_modalType);
-  openModal('modal-add');
-  setTimeout(()=>document.getElementById('modal-desc').focus(), 100);
-}
-
-function openEditModal(id, type) {
-  const md = getMD(_curY, _curM);
-  const arr = type === 'e' ? md.expenses : md.income;
-  const tx = arr.find(t => t.id === id);
-  if (!tx) return;
-  _editTx = {id, type};
-  _modalType = type;
-  document.getElementById('modal-title').textContent = 'Upravit položku';
-  document.getElementById('modal-day').value = tx.day;
-  document.getElementById('modal-desc').value = tx.desc;
-  document.getElementById('modal-amount').value = tx.amount;
-  document.getElementById('modal-delete-btn').style.display = '';
-  // Set seg
-  document.querySelectorAll('#modal-type-seg .seg-opt').forEach((b,i)=>{
-    b.classList.remove('on','type-e','type-i');
-    if ((i===0&&type==='e')||(i===1&&type==='i')) b.classList.add('on', 'type-' + type);
-  });
-  openModal('modal-add');
-}
-
-function setModalType(t, btn) {
-  _modalType = t;
-  document.querySelectorAll('#modal-type-seg .seg-opt').forEach(b => b.classList.remove('on','type-e','type-i'));
-  btn.classList.add('on','type-'+t);
-}
-
-function saveModal() {
-  const day = parseInt(document.getElementById('modal-day').value) || new Date().getDate();
-  const desc = document.getElementById('modal-desc').value.trim();
-  const amount = parseFloat(document.getElementById('modal-amount').value);
-  if (!desc || !amount || amount <= 0) { alert('Vyplňte popis a částku'); return; }
-
-  const md = getMD(_curY, _curM);
-
-  if (_editTx) {
-    // Edit existing
-    const arr = _editTx.type === 'e' ? md.expenses : md.income;
-    const tx = arr.find(t => t.id === _editTx.id);
-    if (tx) {
-      // If type changed, move between arrays
-      if (_editTx.type !== _modalType) {
-        const srcArr = _editTx.type === 'e' ? md.expenses : md.income;
-        const dstArr = _modalType === 'e' ? md.expenses : md.income;
-        const idx = srcArr.findIndex(t => t.id === _editTx.id);
-        if (idx !== -1) {
-          srcArr.splice(idx, 1);
-          dstArr.push({id: _editTx.id, day, desc, amount});
-        }
-      } else {
-        tx.day = day; tx.desc = desc; tx.amount = amount;
-      }
-    }
-  } else {
-    // New
-    const tx = {id: uid(), day, desc, amount};
-    if (_modalType === 'e') md.expenses.push(tx); else md.income.push(tx);
-  }
-
-  save();
-  closeModal('modal-add');
-  renderMonth(_curY, _curM);
-}
-
-function deleteCurrentTx() {
-  if (!_editTx) return;
-  if (!confirm('Smazat tuto položku?')) return;
-  const md = getMD(_curY, _curM);
-  if (_editTx.type === 'e') md.expenses = md.expenses.filter(t => t.id !== _editTx.id);
-  else md.income = md.income.filter(t => t.id !== _editTx.id);
-  save();
-  closeModal('modal-add');
-  renderMonth(_curY, _curM);
-}
-
-// ═══════════════════════════════════════════════
-// INVESTMENTS
-// ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
-// INVESTMENTS — drill-down view
-// ═══════════════════════════════════════════════
-let _invView = {level: 'top'}; // top | broker | ticker
-
-const EUR_CZK = 25; // approx rate for DIP 48k limit check
-const DIP_LIMIT = 48000;
-
-function renderInv() {
-  if (_invView.level === 'top') renderInvTop();
-  else if (_invView.level === 'broker') renderInvBroker(_invView.broker);
-  else if (_invView.level === 'ticker') renderInvTicker(_invView.broker, _invView.ticker);
-}
-
-function invBack() {
-  if (_invView.level === 'ticker') { _invView = {level:'broker', broker:_invView.broker}; }
-  else { _invView = {level:'top'}; }
-  renderInv(); updateHdr();
-}
-
-function renderInvTop() {
-  const sc = document.getElementById('screen-inv');
-  const invs = db.investments || [];
-
-  // Group by broker
-  const brokers = {};
-  invs.forEach(inv => {
-    const b = inv.broker;
-    if (!brokers[b]) brokers[b] = [];
-    brokers[b].push(inv);
-  });
-
-  // DIP limit per year
-  const dipInvs = brokers['Raiffeisen DIP'] || [];
-  const dipByYear = {};
-  dipInvs.forEach(inv => {
-    const y = inv.date.slice(0,4);
-    if (!dipByYear[y]) dipByYear[y] = 0;
-    const czk = inv.currency === 'CZK' ? inv.quantity*inv.price : inv.quantity*inv.price*EUR_CZK;
-    if (inv.type === 'Nákup') dipByYear[y] += czk;
-  });
-  const dipYearsDone = Object.entries(dipByYear).filter(([y,v]) => v >= DIP_LIMIT);
-
-  const brokerOrder = ['DEGIRO','Interactive Brokers','Raiffeisen DIP','Bitcoin','Ethereum','Jiný'];
-  const allBrokers = brokerOrder.filter(b => brokers[b]);
-  Object.keys(brokers).forEach(b => { if (!brokerOrder.includes(b)) allBrokers.push(b); });
-
-  const brokerCards = allBrokers.map(broker => {
-    const list = brokers[broker];
-    const bcls = broker==='DEGIRO'?'badge-degiro':broker==='Raiffeisen DIP'?'badge-dip':broker==='Bitcoin'||broker==='Ethereum'?'badge-btc':'badge-ib';
-    // Count tickers
-    const tickers = [...new Set(list.map(i=>i.ticker||i.name.slice(0,6)))];
-    // Total by currency
-    const tots = {};
-    list.forEach(inv => {
-      const sign = inv.type==='Prodej'?-1:1;
-      const k = inv.currency;
-      if (!tots[k]) tots[k]=0;
-      tots[k] += inv.quantity*inv.price*sign;
-    });
-    const totStr = Object.entries(tots).map(([c,v]) => fmtCurr(Math.abs(v),c)).join(' + ');
-
-    // DIP badge
-    const dipBadge = broker==='Raiffeisen DIP' && dipYearsDone.length > 0
-      ? `<span class="badge" style="background:rgba(52,216,150,.15);color:var(--grn)">✓ ${dipYearsDone.length}× 48k</span>` : '';
-
-    return `<div class="inv-broker-card" onclick="_invView={level:'broker',broker:'${escH(broker)}'};renderInv();updateHdr()">
-      <div class="inv-broker-hd">
-        <span class="badge ${bcls}">${escH(broker)}</span>
-        ${dipBadge}
-        <span style="margin-left:auto;font-family:var(--mono);font-size:.85rem;font-weight:600">${totStr}</span>
-        <span style="color:var(--txt3);margin-left:8px">›</span>
-      </div>
-      <div class="inv-broker-ft">
-        <span class="inv-meta">${list.length} transakcí</span>
-        <span class="inv-meta">·</span>
-        <span class="inv-meta">${tickers.slice(0,5).join(', ')}${tickers.length>5?'…':''}</span>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Totals — raw by currency
-  let totCZK=0, totEUR=0, totUSD=0, totBTC=0, totETH=0;
-  invs.forEach(inv => {
-    const sign = inv.type==='Prodej'?-1:1;
-    const t = inv.quantity*inv.price*sign;
-    if (inv.currency==='CZK') totCZK+=t;
-    else if (inv.currency==='EUR') totEUR+=t;
-    else if (inv.currency==='USD') totUSD+=t;
-    else if (inv.currency==='BTC') totBTC+=t;
-    else if (inv.currency==='ETH') totETH+=t;
-  });
-
-  // Grand total in CZK (approx)
-  // EUR_CZK = 25 (const), USD_CZK ~23
-  const USD_CZK = 23;
-  const grandTotal = totCZK + totEUR*EUR_CZK + totUSD*USD_CZK
-    + (_btcCzk ? totBTC*_btcCzk : 0)
-    + (_ethCzk ? totETH*_ethCzk : 0);
-  const btcNote = _btcCzk ? `1 BTC ≈ ${Math.round(_btcCzk).toLocaleString('cs-CZ')} Kč` : 'BTC kurz se načítá...';
-  const ethNote = _ethCzk ? `1 ETH ≈ ${Math.round(_ethCzk).toLocaleString('cs-CZ')} Kč` : '';
-
-  sc.innerHTML = `
-    <div class="total-banner">
-      <div class="total-banner-row"><span class="tb-label">💰 Celkem v Kč (odhadem)</span><span class="tb-val c-acc">${fmtFull(grandTotal)}</span></div>
-      <div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">CZK</span><span class="tb-val">${fmtFull(totCZK)}</span></div>
-      <div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">EUR (×25)</span><span class="tb-val c-blue">€${Math.round(totEUR).toLocaleString('cs-CZ')}</span></div>
-      <div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">USD (×23)</span><span class="tb-val c-grn">$${Math.round(totUSD).toLocaleString('cs-CZ')}</span></div>
-      ${totBTC ? `<div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">BTC</span><span class="tb-val" style="color:#f7931a">${totBTC.toFixed(8)}</span></div>` : ''}
-      ${totETH ? `<div class="total-banner-row" style="opacity:.7;font-size:.78rem"><span class="tb-label">ETH</span><span class="tb-val" style="color:#627EEA">${totETH.toFixed(6)}</span></div>` : ''}
-      <div class="total-banner-row" style="border-top:1px solid var(--line2);padding-top:6px;margin-top:2px;opacity:.5;font-size:.72rem"><span class="tb-label" style="color:var(--txt3)">${btcNote}${ethNote?' · '+ethNote:''}</span><span></span></div>
-    </div>
-    ${brokerCards || '<div class="empty"><div class="empty-ico">📊</div><p>Žádné investice.</p></div>'}
-  `;
-}
-
-function renderInvBroker(broker) {
-  const sc = document.getElementById('screen-inv');
-  const invs = (db.investments||[]).filter(i=>i.broker===broker).sort((a,b)=>a.date.localeCompare(b.date));
-
-  // Group by ticker
-  const tickers = {};
-  invs.forEach(inv => {
-    const t = inv.ticker || inv.name.slice(0,6);
-    if (!tickers[t]) tickers[t] = {name:inv.name, invs:[]};
-    tickers[t].invs.push(inv);
-  });
-
-  // DIP per-year limit (only for Raiffeisen DIP)
-  let dipSection = '';
-  if (broker === 'Raiffeisen DIP') {
-    const byYear = {};
-    invs.forEach(inv => {
-      const y = inv.date.slice(0,4);
-      if (!byYear[y]) byYear[y] = 0;
-      const czk = inv.currency === 'CZK' ? inv.quantity*inv.price : inv.quantity*inv.price*EUR_CZK;
-      if (inv.type === 'Nákup') byYear[y] += czk;
-    });
-    const rows = Object.entries(byYear).sort().map(([y,v]) => {
-      const pct = Math.min(100, (v/DIP_LIMIT)*100);
-      const done = v >= DIP_LIMIT;
-      return `<div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-weight:700">${y}</span>
-          <span style="font-family:var(--mono);font-size:.85rem;color:${done?'var(--grn)':'var(--txt2)'}">${Math.round(v).toLocaleString('cs-CZ')} Kč ${done?'✓ SPLNĚNO':'/ 48 000 Kč'}</span>
+  <div class="card">
+    <div class="card-title">Logo aplikace</div>
+    <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+      <div>
+        <div class="settings-label">Náhled</div>
+        <div class="logo-preview" id="logo-preview">
+          <img id="logo-preview-img" src="" alt="logo náhled" style="max-width:100%;max-height:100%;object-fit:contain;">
         </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${done?'var(--grn)':'var(--acc)'}"></div></div>
-      </div>`;
-    }).join('');
-    dipSection = `<div class="card" style="margin-bottom:8px">
-      <div class="card-hd"><span class="card-label">📋 Odpočet DIP — 48 000 Kč / rok</span></div>
-      <div class="card-body">${rows}</div>
-    </div>`;
-  }
-
-  const tickerCards = Object.entries(tickers).map(([tk, {name, invs: tInvs}]) => {
-    const totalQty = tInvs.filter(i=>i.type==='Nákup').reduce((s,i)=>s+i.quantity,0)
-                   - tInvs.filter(i=>i.type==='Prodej').reduce((s,i)=>s+i.quantity,0);
-    const curr = tInvs[0].currency;
-    const totalVal = tInvs.reduce((s,i)=>s+(i.type==='Nákup'?1:-1)*i.quantity*i.price,0);
-    return `<div class="inv-broker-card" onclick="_invView={level:'ticker',broker:'${escH(broker)}',ticker:'${escH(tk)}'};renderInv();updateHdr()">
-      <div class="inv-broker-hd">
-        <span class="inv-ticker">${escH(tk)}</span>
-        <span class="inv-name">${escH(name)}</span>
-        <span style="margin-left:auto;font-family:var(--mono);font-size:.85rem;font-weight:600">${fmtCurr(totalVal,curr)}</span>
-        <span style="color:var(--txt3);margin-left:8px">›</span>
+        <div style="display:flex;gap:8px;">
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+            🖼️ Nahrát logo z galerie
+            <input type="file" id="logo-file-input" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
+          </label>
+          <button class="btn btn-ghost btn-sm" onclick="resetLogo()">↩ Výchozí</button>
+        </div>
       </div>
-      <div class="inv-broker-ft">
-        <span class="inv-meta">${tInvs.length} transakcí</span>
-        <span class="inv-meta">·</span>
-        <span class="inv-meta">${totalQty % 1 === 0 ? totalQty : totalQty.toFixed(6)} ks celkem</span>
+      <div style="flex:1;min-width:200px;">
+        <div class="settings-label">Přizpůsobení</div>
+        <div class="slider-row">
+          <label>Velikost</label>
+          <input type="range" id="set-logo-size" min="24" max="100" value="48" oninput="updateLogoLive()">
+          <span id="set-logo-size-val">48px</span>
+        </div>
+        <div class="slider-row">
+          <label>Posun X</label>
+          <input type="range" id="set-logo-ox" min="-30" max="30" value="0" oninput="updateLogoLive()">
+          <span id="set-logo-ox-val">0px</span>
+        </div>
+        <div class="slider-row">
+          <label>Posun Y</label>
+          <input type="range" id="set-logo-oy" min="-20" max="20" value="0" oninput="updateLogoLive()">
+          <span id="set-logo-oy-val">0px</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="saveLogoSettings()">Uložit logo</button>
+          <button class="btn btn-ghost btn-sm" onclick="centerLogo()">Vystředit</button>
+        </div>
       </div>
-    </div>`;
-  }).join('');
-
-  sc.innerHTML = dipSection + (tickerCards || '<div class="empty"><p>Žádné záznamy.</p></div>');
-}
-
-function renderInvTicker(broker, ticker) {
-  const sc = document.getElementById('screen-inv');
-  const invs = (db.investments||[])
-    .filter(i=>i.broker===broker && (i.ticker===ticker||(i.ticker||i.name.slice(0,6))===ticker))
-    .sort((a,b)=>a.date.localeCompare(b.date));
-
-  if (!invs.length) { sc.innerHTML = '<div class="empty"><p>Žádné záznamy.</p></div>'; return; }
-
-  const curr = invs[0].currency;
-  let totalQty = 0, totalVal = 0;
-  const rows = invs.map(inv => {
-    const sign = inv.type==='Nákup'?1:-1;
-    totalQty += sign*inv.quantity;
-    totalVal += sign*inv.quantity*inv.price;
-    const fmtD = (s => { const p=s.split('-'); return p[2]+'. '+p[1]+'. '+p[0]; })(inv.date);
-    const qtyStr = inv.quantity%1===0 ? inv.quantity : inv.quantity.toFixed(6);
-    return `<div class="tx-row" onclick="openEditInv('${inv.id}')" style="cursor:pointer">
-      <div style="flex:1">
-        <div style="font-size:.85rem;font-weight:600;color:${inv.type==='Nákup'?'var(--txt)':'var(--grn)'}">${inv.type} · ${fmtD}</div>
-        <div style="font-size:.78rem;color:var(--txt3);font-family:var(--mono)">${qtyStr} ks × ${fmtCurr(inv.price,curr)}</div>
-      </div>
-      <div style="font-family:var(--mono);font-size:.9rem;font-weight:700;color:${inv.type==='Nákup'?'var(--red)':'var(--grn)'}">
-        ${inv.type==='Nákup'?'−':'+'}${fmtCurr(inv.quantity*inv.price,curr)}
-      </div>
-      <div class="tx-edit-ico" style="margin-left:6px">✎</div>
-    </div>`;
-  }).join('');
-
-  const tqStr = totalQty%1===0?totalQty:totalQty.toFixed(8);
-  const cryptoCzkRow = (curr==='BTC' && _btcCzk && totalQty > 0)
-    ? `<div class="total-banner-row"><span class="tb-label">Hodnota v Kč</span><span class="tb-val c-acc">${fmtFull(totalQty*_btcCzk)}</span></div>`
-    : (curr==='ETH' && _ethCzk && totalQty > 0)
-    ? `<div class="total-banner-row"><span class="tb-label">Hodnota v Kč</span><span class="tb-val c-acc">${fmtFull(totalQty*_ethCzk)}</span></div>`
-    : '';
-  sc.innerHTML = `
-    <div class="total-banner">
-      <div class="total-banner-row"><span class="tb-label">Aktuální pozice</span><span class="tb-val" style="font-family:var(--mono)">${tqStr} ks</span></div>
-      <div class="total-banner-row"><span class="tb-label">Celkem investováno</span><span class="tb-val">${fmtCurr(totalVal,curr)}</span></div>
-      ${cryptoCzkRow}
     </div>
-    <div class="card">${rows}</div>
-  `;
+  </div>
+
+  <div class="card">
+    <div class="card-title">💾 Export a Import dat</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Záloha dat pro případ ztráty nebo přesunu na jiné zařízení. Exportovaný soubor obsahuje hráče, sezóny, zápasy a finance.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="exportData()">📥 Exportovat data (JSON)</button>
+      <label class="btn btn-secondary" style="cursor:pointer;">
+        📤 Importovat data
+        <input type="file" id="import-file-input" accept=".json" style="display:none;" onchange="importData(event)">
+      </label>
+    </div>
+    <div id="import-status" style="margin-top:10px;font-size:13px;"></div>
+  </div>
+
+</div>
+
+</main>
+
+<!-- MODAL: EDIT MATCH -->
+<div id="modal-edit-match" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-edit-match')">
+  <div class="modal">
+    <div class="modal-title">Upravit zápas</div>
+    <input type="hidden" id="edit-match-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Číslo zápasu</label>
+        <input class="input" type="number" id="edit-match-number" min="1" style="width:80px;">
+      </div>
+      <div class="form-group" style="flex:2;">
+        <label class="form-label">Soupeř</label>
+        <input class="input" id="edit-match-team" placeholder="Název soupeře">
+      </div>
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:12px 0 6px;">Hráči — přítomnost</div>
+    <div class="pclist" id="edit-match-players-list" style="max-height:380px;"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn btn-secondary btn-sm" onclick="editMatchSelectAll()">✓ Všichni přítomni</button>
+      <button class="btn btn-ghost btn-sm" onclick="editMatchClear()">Vymazat vše</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-match')">Zrušit</button>
+      <button class="btn btn-primary" onclick="saveEditMatch()">Uložit zápas</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD MATCH -->
+<div id="modal-add-match" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-add-match')">
+  <div class="modal">
+    <div class="modal-title">Přidat zápas</div>
+    <div class="form-group">
+      <label class="form-label">Soupeř</label>
+      <input class="input" id="match-team" placeholder="Název týmu" onkeydown="if(event.key==='Enter')saveMatch()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Přítomnost hráčů &nbsp;<span style="color:var(--muted);font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;">
+        <span style="background:var(--green);color:#fff;border-radius:3px;padding:1px 5px;font-size:10px;">✓ byl</span>
+        <span style="background:var(--red);color:#fff;border-radius:3px;padding:1px 5px;font-size:10px;margin-left:4px;">✕ nebyl</span>
+      </span></label>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <button class="btn btn-green btn-sm" onclick="selectAllPresent()">Označit všechny</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearPresence()">Vymazat vše</button>
+        <button class="btn btn-secondary btn-sm" onclick="voiceToggle()" style="display:flex;align-items:center;gap:5px;">🎙️ Hlas</button>
+      </div>
+      <!-- Hlasový panel -->
+      <div id="voiceBar" style="display:none;margin-bottom:10px;padding:10px 12px;background:#f5f5f5;border:1px solid #ddd;border-radius:10px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div id="voiceDot" style="width:10px;height:10px;border-radius:50%;background:#aaa;flex-shrink:0;transition:background .2s;"></div>
+          <div id="voiceStatus" style="font-size:13px;font-weight:600;flex:1;">Připravuji...</div>
+        </div>
+        <div style="text-align:center;">
+          <button id="voiceMicBtn" onclick="voiceToggleMic()" style="width:64px;height:64px;border-radius:50%;border:2px solid #ccc;background:#fff;font-size:28px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s;">🎙️</button>
+          <div id="voiceMicLbl" style="font-size:12px;color:#888;margin-top:6px;">Klepni a říkej příjmení za příjmením</div>
+        </div>
+        <div id="voiceLog" style="margin-top:8px;font-size:13px;min-height:20px;line-height:1.6;"></div>
+      </div>
+      <style>
+        @keyframes vpulse{0%{box-shadow:0 0 0 0 rgba(232,67,58,.5)}70%{box-shadow:0 0 0 16px rgba(232,67,58,0)}100%{box-shadow:0 0 0 0 rgba(232,67,58,0)}}
+      </style>
+      <div class="pclist" id="match-players-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-match')">Zrušit</button>
+      <button class="btn btn-primary" onclick="saveMatch()">Uložit zápas</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD PLAYER -->
+<div id="modal-add-player" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-add-player')">
+  <div class="modal">
+    <div class="modal-title">Přidat hráče</div>
+    <div class="form-group">
+      <label class="form-label">Jméno</label>
+      <input class="input" id="new-player-name" placeholder="Příjmení Jméno">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">⬜ Číslo (bílý dres)</label>
+        <input class="input" type="number" id="new-player-nw" placeholder="—">
+      </div>
+      <div class="form-group">
+        <label class="form-label">🟩 Číslo (zelený dres)</label>
+        <input class="input" type="number" id="new-player-ng" placeholder="—">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Velikost dresu</label>
+        <select class="input" id="new-player-size">
+          <option value="">—</option>
+          <option value="XS">XS</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="L">L</option>
+          <option value="XL">XL</option>
+          <option value="2XL">2XL</option>
+          <option value="3XL">3XL</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Post</label>
+        <select class="input" id="new-player-pos">
+          <option value="">—</option>
+          <option value="Útočník">⚔️ Útočník</option>
+          <option value="Obránce">🛡️ Obránce</option>
+          <option value="Brankář">🥅 Brankář</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-player')">Zrušit</button>
+      <button class="btn btn-primary" onclick="addPlayer()">Přidat</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT PLAYER -->
+<div id="modal-edit-player" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-edit-player')">
+  <div class="modal">
+    <div class="modal-title">Upravit hráče</div>
+    <input type="hidden" id="edit-player-id">
+    <div class="form-group">
+      <label class="form-label">Jméno</label>
+      <input class="input" id="edit-player-name">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">⬜ Číslo (bílý dres)</label>
+        <input class="input" type="number" id="edit-player-nw" placeholder="—">
+      </div>
+      <div class="form-group">
+        <label class="form-label">🟩 Číslo (zelený dres)</label>
+        <input class="input" type="number" id="edit-player-ng" placeholder="—">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Velikost dresu</label>
+        <select class="input" id="edit-player-size">
+          <option value="">—</option>
+          <option value="XS">XS</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="L">L</option>
+          <option value="XL">XL</option>
+          <option value="2XL">2XL</option>
+          <option value="3XL">3XL</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Post</label>
+        <select class="input" id="edit-player-pos">
+          <option value="">—</option>
+          <option value="Útočník">⚔️ Útočník</option>
+          <option value="Obránce">🛡️ Obránce</option>
+          <option value="Brankář">🥅 Brankář</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-player')">Zrušit</button>
+      <button class="btn btn-primary" onclick="saveEditPlayer()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD SEASON -->
+<div id="modal-add-season" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-add-season')">
+  <div class="modal">
+    <div class="modal-title">Nová sezóna</div>
+    <div class="form-group">
+      <label class="form-label">Název (např. Sezóna 26/27)</label>
+      <input class="input" id="new-season-name" placeholder="Sezóna 26/27" onkeydown="if(event.key==='Enter')addSeason()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-season')">Zrušit</button>
+      <button class="btn btn-primary" onclick="addSeason()">Vytvořit</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SEASON PAID SUMMARY -->
+<div id="modal-season-paid" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-season-paid')">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">Zaplaceno v sezóně</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:20px;" id="season-paid-sub"></div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:120px;background:var(--green-bg);border-radius:10px;padding:16px 18px;text-align:center;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green2);margin-bottom:6px;">Celkem zaplaceno</div>
+        <div id="season-paid-total" style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--green2);"></div>
+      </div>
+      <div style="flex:1;min-width:120px;background:var(--red-bg);border-radius:10px;padding:16px 18px;text-align:center;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red2);margin-bottom:6px;">Celkem zbývá</div>
+        <div id="season-paid-remaining" style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--red2);"></div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+      <div id="season-paid-list" style="max-height:320px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-season-paid')">Zavřít</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD FEE -->
+<div id="modal-add-fee" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-add-fee')">
+  <div class="modal">
+    <div class="modal-title">Přidat poplatek</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:16px;" id="fee-modal-sub"></div>
+    <input type="hidden" id="fee-player-id">
+    <input type="hidden" id="fee-season-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Celková částka (Kč)</label>
+        <input class="input" type="number" id="fee-amount">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Již zaplaceno (Kč)</label>
+        <input class="input" type="number" id="fee-paid-init" placeholder="0">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-fee')">Zrušit</button>
+      <button class="btn btn-primary" onclick="saveFee()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PAY FEE -->
+<div id="modal-pay-fee" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-pay-fee')">
+  <div class="modal">
+    <div class="modal-title">Zaplatit poplatek</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:6px;" id="pay-modal-sub"></div>
+    <div style="margin-bottom:16px;" id="pay-modal-info"></div>
+    <input type="hidden" id="pay-player-id">
+    <input type="hidden" id="pay-season-id">
+    <div class="form-group">
+      <label class="form-label">Zaplatit částku (Kč)</label>
+      <input class="input" type="number" id="pay-amount" onkeydown="if(event.key==='Enter')savePayment()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pay-fee')">Zrušit</button>
+      <button class="btn btn-gold" onclick="savePayment()">Zaplatit</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: MATCH DETAIL -->
+<div id="modal-match-detail" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-match-detail')">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title" id="match-detail-title"></div>
+    <div id="match-detail-counts" style="margin-bottom:8px;font-size:14px;"></div>
+    <div id="match-detail-body" style="max-height:60vh;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modal-match-detail')">Zavřít</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PICK PLAYERS FROM LIST -->
+<div id="modal-season-pick-players" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-season-pick-players')">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">Přidat hráče do sezóny</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:12px;" id="spp-sub"></div>
+    <input class="input" style="margin-bottom:10px;" id="spp-filter" placeholder="Hledat hráče..." oninput="renderSeasonPickList()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);" id="spp-count"></span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="sppSelectAll()">Všichni</button>
+        <button class="btn btn-ghost btn-sm" onclick="sppSelectNone()">Žádný</button>
+      </div>
+    </div>
+    <div class="pclist" id="spp-list" style="max-height:320px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-season-pick-players')">Zrušit</button>
+      <button class="btn btn-green" onclick="saveSeasonPick()">Přidat vybrané</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD PLAYER TO SEASON -->
+<div id="modal-season-add-player" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-season-add-player')">
+  <div class="modal">
+    <div class="modal-title">Přidat hráče do sezóny</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:14px;">Nový hráč se přidá i do hlavního seznamu hráčů.</div>
+    <div class="form-group">
+      <label class="form-label">Jméno</label>
+      <input class="input" id="sap-name" placeholder="Příjmení Jméno">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">⬜ Číslo (bílý)</label>
+        <input class="input" type="number" id="sap-nw" placeholder="—">
+      </div>
+      <div class="form-group">
+        <label class="form-label">🟩 Číslo (zelený)</label>
+        <input class="input" type="number" id="sap-ng" placeholder="—">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Velikost dresu</label>
+        <select class="input" id="sap-size">
+          <option value="">—</option>
+          <option value="XS">XS</option><option value="S">S</option><option value="M">M</option>
+          <option value="L">L</option><option value="XL">XL</option>
+          <option value="2XL">2XL</option><option value="3XL">3XL</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Post</label>
+        <select class="input" id="sap-pos">
+          <option value="">—</option>
+          <option value="Útočník">⚔️ Útočník</option>
+          <option value="Obránce">🛡️ Obránce</option>
+          <option value="Brankář">🥅 Brankář</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-season-add-player')">Zrušit</button>
+      <button class="btn btn-primary" onclick="addPlayerToSeason()">Přidat hráče</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: BULK FEE -->
+<div id="modal-bulk-fee" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-bulk-fee')">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-title">Hromadný poplatek</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:16px;" id="bulk-fee-sub"></div>
+    <div class="form-row" style="margin-bottom:16px;">
+      <div class="form-group" style="max-width:260px;">
+        <label class="form-label">Výše poplatku (Kč)</label>
+        <input class="input" type="number" id="bulk-fee-amount" placeholder="3000">
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <label class="form-label" style="margin:0;">Vybrat hráče</label>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="bulkSelectAll()">Všichni</button>
+        <button class="btn btn-ghost btn-sm" onclick="bulkSelectNone()">Žádný</button>
+      </div>
+    </div>
+    <div class="pclist" id="bulk-player-list" style="max-height:280px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bulk-fee')">Zrušit</button>
+      <button class="btn btn-primary" onclick="saveBulkFee()">Nastavit poplatek</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD/EDIT ITEM -->
+<div id="modal-item" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-item')">
+  <div class="modal">
+    <div class="modal-title" id="item-modal-title">Přidat položku</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:16px;" id="item-modal-sub"></div>
+    <input type="hidden" id="item-player-id">
+    <input type="hidden" id="item-season-id">
+    <input type="hidden" id="item-id">
+    <div class="form-group">
+      <label class="form-label">Název položky</label>
+      <input class="input" id="item-name-input" placeholder="např. Štulpny, Dres, Výstroj...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Celková částka (Kč)</label>
+        <input class="input" type="number" id="item-amount" placeholder="0" oninput="updateItemRemaining()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Zaplaceno (Kč)</label>
+        <input class="input" type="number" id="item-paid" placeholder="0" oninput="updateItemRemaining()">
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:4px;font-size:13px;color:var(--muted);">
+      💡 Zbývá doplatit: <strong id="item-remaining" style="color:var(--dark);">—</strong>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="item-delete-btn" style="margin-right:auto;display:none;" onclick="deleteItem()">🗑 Smazat</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-item')">Zrušit</button>
+      <button class="btn btn-primary" onclick="saveItem()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT FEE -->
+<div id="modal-edit-fee" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-edit-fee')">
+  <div class="modal">
+    <div class="modal-title">Upravit poplatek</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:16px;" id="edit-fee-sub"></div>
+    <input type="hidden" id="edit-fee-player-id">
+    <input type="hidden" id="edit-fee-season-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Celková částka k zaplacení (Kč)</label>
+        <input class="input" type="number" id="edit-fee-amount" placeholder="3000" oninput="updateEditFeeRemaining()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Již zaplaceno (Kč)</label>
+        <input class="input" type="number" id="edit-fee-paid" placeholder="0" oninput="updateEditFeeRemaining()">
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:4px;font-size:13px;color:var(--muted);">
+      💡 Zbývá doplatit: <strong id="edit-fee-remaining" style="color:var(--dark);">—</strong>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteFee()" style="margin-right:auto;">🗑 Smazat poplatek</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-fee')">Zrušit</button>
+      <button class="btn btn-primary" onclick="saveEditFee()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DEFAULT LOGO ====================
+const DEFAULT_LOGO = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0f1a10" stroke="#e63946" stroke-width="4"/><text x="50" y="38" font-family="Arial Black,sans-serif" font-size="28" font-weight="900" fill="#e63946" text-anchor="middle" dominant-baseline="middle">HB</text><text x="50" y="65" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#2d9e5f" text-anchor="middle" dominant-baseline="middle" letter-spacing="1">NFC SPARTA</text></svg>`);
+
+// ==================== PWA MANIFEST ====================
+function injectPWAManifest(iconSrc) {
+  const icon = iconSrc || DEFAULT_LOGO;
+  // Apple touch icon
+  document.getElementById('apple-touch-icon').href = icon;
 }
 
-let _editInvId = null;
-let _btcCzk = 0;    // fetched live
-let _ethCzk = 0;
+// ==================== DEFAULT DATA ====================
+const DEFAULT_DATA = {"players": [], "seasons": [], "seasonData": {}, "appName": "Hokejbal", "logoSize": 48, "logoOffsetX": 0, "logoOffsetY": 0};
 
-// Fetch BTC/ETH price in CZK
-async function fetchCryptoRates() {
+// ==================== STATE ====================
+let state;
+let currentPage = 'home';
+let currentSeasonId = null;
+let currentPlayerId = null;
+let playerBackPage = 'players';
+let matchPresence = {};
+let appSettings = {name:'Hokejbal', sub:'NFC Sparta Kladno', logoSize:48, logoOffsetX:0, logoOffsetY:0, logoSrc: DEFAULT_LOGO};
+
+// ==================== STORAGE ====================
+function saveState() {
+  try { localStorage.setItem('hokejbal_v2', JSON.stringify(state)); } catch(e) {}
+}
+function saveSettings() {
   try {
-    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=czk', {signal: AbortSignal.timeout(5000)});
-    if (!r.ok) return;
-    const d = await r.json();
-    _btcCzk = d.bitcoin?.czk || 0;
-    _ethCzk = d.ethereum?.czk || 0;
-    // Refresh inv view if on inv screen
-    if (_nav === 'inv' && _invView.level === 'top') renderInvTop();
+    const s = {...appSettings};
+    // Don't store full logo in settings key if same as default - save space
+    localStorage.setItem('hokejbal_settings_v2', JSON.stringify(s));
+  } catch(e) {}
+}
+function loadAll() {
+  try {
+    const s = localStorage.getItem('hokejbal_v2');
+    if (s) state = JSON.parse(s);
+    else state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  } catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+  try {
+    const cfg = localStorage.getItem('hokejbal_settings_v2');
+    if (cfg) appSettings = {...appSettings, ...JSON.parse(cfg)};
   } catch(e) {}
 }
 
-function getCustomBrokers() { return db.customBrokers || []; }
+// ==================== UTILS ====================
+function uid() { return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+function findPlayer(id) { return state.players.find(p=>p.id===id); }
 
-function rebuildBrokerSelect(selectedBroker) {
-  const sel = document.getElementById('inv-broker');
-  const fixed = ['DEGIRO','Interactive Brokers','Raiffeisen DIP','Bitcoin','Ethereum'];
-  const custom = getCustomBrokers();
-  sel.innerHTML = fixed.map(b => `<option${selectedBroker===b?' selected':''}>${b}</option>`).join('');
-  if (custom.length) {
-    sel.innerHTML += '<option disabled>──────────</option>';
-    custom.forEach(b => { sel.innerHTML += `<option${selectedBroker===b?' selected':''}>${escH(b)}</option>`; });
-  }
-  sel.innerHTML += '<option value="__jiny__"' + (selectedBroker==='__jiny__'?' selected':'') + '>+ Jiný (nový broker)</option>';
+// Zobrazení čísla dresu — pokud nemá bílý, ukáže jen zelený
+function playerNumBadge(p) {
+  const w = p.numberWhite != null ? p.numberWhite : null;
+  const g = p.numberGreen != null ? p.numberGreen : null;
+  if (w != null && g != null && w !== g) return `<span style="color:#666;">⬜${w}</span> <span style="color:var(--green2);">🟩${g}</span>`;
+  if (w != null) return `#${w}`;
+  if (g != null) return `<span style="color:var(--green2);">🟩 #${g}</span>`;
+  if (p.number != null) return `#${p.number}`;
+  return '—';
+}
+function playerNumText(p) {
+  const w = p.numberWhite != null ? p.numberWhite : null;
+  const g = p.numberGreen != null ? p.numberGreen : null;
+  if (w != null && g != null && w !== g) return `⬜${w}/🟩${g}`;
+  if (w != null) return `#${w}`;
+  if (g != null) return `🟩#${g}`;
+  if (p.number != null) return `#${p.number}`;
+  return '';
+}
+// Pořadové číslo zápasu v sezóně
+function matchNum(mid, sid) {
+  const ms = getMatches(sid);
+  const idx = ms.findIndex(m => m.id === mid);
+  const m = ms[idx];
+  return m ? (m.number || idx + 1) : '?';
+}
+function findSeason(id) { return state.seasons.find(s=>s.id===id); }
+function getSD(sid) { return state.seasonData[sid] || {matches:[],fees:[]}; }
+function isNoFee(pid,sid) { return (getSD(sid).noFeePlayerIds||[]).includes(pid); }
+function getMatches(sid) { return getSD(sid).matches || []; }
+function getFees(sid) { return getSD(sid).fees || []; }
+function getFee(pid,sid) { return getFees(sid).find(f=>f.playerId===pid)||null; }
+function getPresent(pid,sid) { return getMatches(sid).filter(m=>(m.playerIds||[]).includes(pid)); }
+function getAbsent(pid,sid) { return getMatches(sid).filter(m=>(m.absentIds||[]).includes(pid)); }
+
+// ==================== NAV ====================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const navMap = {home:0, players:1, settings:2};
+  if (navMap[page]!==undefined) document.querySelectorAll('.nav-btn')[navMap[page]].classList.add('active');
+  currentPage = page;
+  if (page==='home') renderHome();
+  if (page==='players') renderPlayersTable();
+  if (page==='season') renderSeasonPage();
+  if (page==='player') renderPlayerPage();
+  if (page==='settings') initSettings();
+}
+function openModal(id) { document.getElementById(id).style.display='flex'; }
+function closeModal(id) { document.getElementById(id).style.display='none'; }
+
+// ==================== HEADER ====================
+function applySettings() {
+  const s = appSettings;
+  // Name
+  document.getElementById('header-name').textContent = s.name;
+  document.getElementById('header-sub').textContent = s.sub || 'NFC Sparta Kladno';
+  document.title = s.name || 'Hokejbal';
+  // Logo
+  const img = document.getElementById('header-logo');
+  img.src = s.logoSrc || DEFAULT_LOGO;
+  img.style.width = s.logoSize+'px';
+  img.style.height = s.logoSize+'px';
+  img.style.transform = `translate(${s.logoOffsetX}px,${s.logoOffsetY}px)`;
 }
 
-function onBrokerChange() {
-  const val = document.getElementById('inv-broker').value;
-  document.getElementById('inv-custom-broker-field').style.display = val==='__jiny__' ? '' : 'none';
+// ==================== HOME ====================
+function renderHome() {
+  const grid = document.getElementById('season-grid');
+  let html = '';
+  state.seasons.forEach(s => {
+    const cnt = getMatches(s.id).length;
+    html += `<div class="scard">
+      <button class="scard-del" onclick="event.stopPropagation();deleteSeason('${s.id}')" title="Smazat sezónu">✕</button>
+      <div onclick="openSeason('${s.id}')" style="cursor:pointer;">
+        <div class="scard-name">${s.name}</div>
+        <div class="scard-sub">${cnt} zápasů</div>
+      </div>
+    </div>`;
+  });
+  html += `<div class="scard scard-add" onclick="openModal('modal-add-season')">
+    <div class="scard-name">+ Nová sezóna</div>
+    <div class="scard-sub">přidat sezónu</div>
+  </div>`;
+  grid.innerHTML = html;
 }
 
-function openAddInv() {
-  _editInvId = null;
-  document.getElementById('inv-modal-title').textContent = 'Přidat investici';
-  document.getElementById('inv-delete-btn').style.display = 'none';
-  document.getElementById('inv-type').value = 'Nákup';
-  document.getElementById('inv-date').value = new Date().toISOString().split('T')[0];
-  rebuildBrokerSelect(null);
-  document.getElementById('inv-custom-broker-field').style.display = 'none';
-  document.getElementById('inv-custom-broker').value = '';
-  document.getElementById('inv-ticker').value = '';
-  document.getElementById('inv-name').value = '';
-  document.getElementById('inv-qty').value = '';
-  document.getElementById('inv-price').value = '';
-  document.getElementById('inv-currency').value = 'EUR';
-  openModal('modal-inv');
+function openSeason(sid) { currentSeasonId=sid; showPage('season'); }
+
+function addSeason() {
+  const name = document.getElementById('new-season-name').value.trim();
+  if (!name) return;
+  state.seasons.push({id:uid(), name});
+  saveState(); closeModal('modal-add-season');
+  document.getElementById('new-season-name').value='';
+  renderHome();
 }
 
-function openEditInv(id) {
-  const inv = (db.investments||[]).find(i=>i.id===id);
-  if (!inv) return;
-  _editInvId = id;
-  document.getElementById('inv-modal-title').textContent = 'Upravit investici';
-  document.getElementById('inv-delete-btn').style.display = '';
-  document.getElementById('inv-type').value = inv.type;
-  document.getElementById('inv-date').value = inv.date;
-  rebuildBrokerSelect(inv.broker);
-  document.getElementById('inv-custom-broker-field').style.display = 'none';
-  document.getElementById('inv-custom-broker').value = '';
-  document.getElementById('inv-ticker').value = inv.ticker || '';
-  document.getElementById('inv-name').value = inv.name || '';
-  document.getElementById('inv-qty').value = inv.quantity;
-  document.getElementById('inv-price').value = inv.price;
-  document.getElementById('inv-currency').value = inv.currency || 'EUR';
-  openModal('modal-inv');
+function deleteSeason(sid) {
+  const s = findSeason(sid);
+  if (!confirm(`Smazat sezónu "${s.name}"?\n\nTato akce smaže i všechny zápasy a platby v této sezóně.`)) return;
+  state.seasons = state.seasons.filter(s=>s.id!==sid);
+  delete state.seasonData[sid];
+  saveState();
+  renderHome();
 }
 
-function saveInv() {
-  let broker = document.getElementById('inv-broker').value;
-  if (broker === '__jiny__') {
-    broker = document.getElementById('inv-custom-broker').value.trim();
-    if (!broker) { alert('Zadejte název brokera'); return; }
-    if (!db.customBrokers) db.customBrokers = [];
-    if (!db.customBrokers.includes(broker)) db.customBrokers.push(broker);
-  }
-  const inv = {
-    id: _editInvId || uid(),
-    type: document.getElementById('inv-type').value,
-    date: document.getElementById('inv-date').value,
-    broker,
-    ticker: document.getElementById('inv-ticker').value.trim().toUpperCase(),
-    name: document.getElementById('inv-name').value.trim(),
-    quantity: parseFloat(document.getElementById('inv-qty').value)||1,
-    price: parseFloat(document.getElementById('inv-price').value)||0,
-    currency: document.getElementById('inv-currency').value,
+// ==================== PLAYERS ====================
+let playerSort = 'name';
+function setPlayerSort(col) {
+  playerSort = col;
+  const tn = document.getElementById('th-name');
+  const td = document.getElementById('th-number');
+  if(tn) tn.style.fontWeight = col==='name'?'800':'600';
+  if(td) td.style.fontWeight = col==='number'?'800':'600';
+  renderPlayersTable();
+}
+function renderPlayersTable() {
+  const filter = (document.getElementById('player-filter')||{}).value||'';
+  const sort = playerSort;
+  let players = state.players.filter(p=>p.name.toLowerCase().includes(filter.toLowerCase()));
+  players.sort((a,b) => sort==='name' ? a.name.localeCompare(b.name) : (a.number||0)-(b.number||0));
+  document.getElementById('players-tbody').innerHTML = players.map((p,i)=>`
+    <tr class="clk" onclick="openPlayer('${p.id}','players')">
+      <td style="color:var(--muted);font-size:12px;font-family:'Barlow Condensed',sans-serif;">${i+1}</td>
+      <td style="color:var(--dark);font-weight:600;">${p.name}</td>
+      <td>${playerNumBadge(p)}</td>
+      <td><span style="font-size:12px;color:var(--muted);">${p.size||'—'}</span></td>
+      <td><span style="font-size:12px;">${p.pos||'—'}</span></td>
+      <td onclick="event.stopPropagation()" style="text-align:right;">
+        <button class="btn btn-ghost btn-sm" onclick="openEditPlayer('${p.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:5px;" onclick="deletePlayer('${p.id}')">🗑</button>
+      </td>
+    </tr>`).join('');
+  renderJerseySummary();
+}
+
+// Extra dresy (skladové zásoby) — oddělené od hráčů
+function getExtraJerseys() { return state.extraJerseys || {white:[], green:[]}; }
+function saveExtraJerseys(ej) { state.extraJerseys = ej; saveState(); }
+
+function renderJerseySummary() {
+  const el = document.getElementById('jerseys-summary');
+  if (!el) return;
+  const ej = getExtraJerseys();
+  const SIZES = ['XS','S','M','L','XL','2XL','3XL'];
+
+  const colHtml = (type, items) => {
+    const label = type==='white' ? '⬜ Bílé dresy' : '🟩 Zelené dresy';
+    const accentCol = type==='white' ? '#94a3b8' : 'var(--green2)';
+    const rows = items.map((j,i) => `
+      <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);">
+        <input class="input" type="number" min="0" max="99" placeholder="#" value="${j.number!=null?j.number:''}"
+          style="width:54px;padding:5px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;"
+          oninput="updateExtraJersey('${type}',${i},'number',this.value)">
+        <select class="input" style="flex:1;padding:5px 8px;" oninput="updateExtraJersey('${type}',${i},'size',this.value)">
+          <option value="">vel.—</option>
+          ${SIZES.map(s=>`<option value="${s}"${j.size===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+        <button class="btn btn-danger btn-sm" style="padding:3px 8px;" onclick="removeExtraJersey('${type}',${i})">✕</button>
+      </div>`).join('');
+    return `<div style="flex:1;min-width:200px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${accentCol};margin-bottom:8px;">${label}</div>
+      ${rows}
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%;justify-content:center;" onclick="addExtraJersey('${type}')">+ Přidat dres</button>
+    </div>`;
   };
-  if (!inv.date || !inv.name || !inv.price) { alert('Vyplňte datum, název a cenu'); return; }
-  if (!db.investments) db.investments = [];
-  if (_editInvId) {
-    const idx = db.investments.findIndex(i=>i.id===_editInvId);
-    if (idx >= 0) db.investments[idx] = inv;
-  } else {
-    db.investments.push(inv);
-  }
-  _editInvId = null;
-  save();
-  closeModal('modal-inv');
-  renderInv();
+
+  el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:24px;">
+    ${colHtml('white', ej.white)}
+    ${colHtml('green', ej.green)}
+  </div>`;
 }
 
-function deleteEditInv() {
-  if (!_editInvId) return;
-  if (!confirm('Smazat tuto investici?')) return;
-  db.investments = (db.investments||[]).filter(i=>i.id!==_editInvId);
-  _editInvId = null;
-  save();
-  closeModal('modal-inv');
-  renderInv();
+function addExtraJersey(type) {
+  const ej = getExtraJerseys();
+  ej[type].push({number:null, size:''});
+  saveExtraJerseys(ej);
+  renderJerseySummary();
+}
+function removeExtraJersey(type, idx) {
+  const ej = getExtraJerseys();
+  ej[type].splice(idx, 1);
+  saveExtraJerseys(ej);
+  renderJerseySummary();
+}
+function updateExtraJersey(type, idx, field, val) {
+  const ej = getExtraJerseys();
+  ej[type][idx][field] = field==='number' ? (val===''?null:Number(val)) : val;
+  saveExtraJerseys(ej);
 }
 
-function deleteInv(id) {
-  if (!confirm('Smazat tuto investici?')) return;
-  db.investments = (db.investments||[]).filter(i=>i.id!==id);
-  save(); renderInv();
+function addPlayer() {
+  const name = document.getElementById('new-player-name').value.trim();
+  if (!name) return;
+  const nw = document.getElementById('new-player-nw').value;
+  const ng = document.getElementById('new-player-ng').value;
+  const size = document.getElementById('new-player-size').value;
+  const pos = document.getElementById('new-player-pos').value;
+  // Use white number as primary if only one set, else store both
+  const numW = nw ? Number(nw) : null;
+  const numG = ng ? Number(ng) : null;
+  const number = numW ?? numG;
+  state.players.push({id:uid(), name, number, numberWhite:numW, numberGreen:numG, size, pos});
+  saveState(); closeModal('modal-add-player');
+  ['new-player-name','new-player-nw','new-player-ng'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-player-size').value='';
+  document.getElementById('new-player-pos').value='';
+  renderPlayersTable();
 }
 
+function deletePlayer(id) {
+  const p = findPlayer(id);
+  if (!confirm(`Smazat hráče "${p.name}"?`)) return;
+  state.players = state.players.filter(p=>p.id!==id);
+  saveState(); renderPlayersTable();
+}
 
+function openEditPlayer(pid) {
+  const p = findPlayer(pid);
+  document.getElementById('edit-player-id').value=pid;
+  document.getElementById('edit-player-name').value=p.name;
+  document.getElementById('edit-player-nw').value=p.numberWhite??p.number??'';
+  document.getElementById('edit-player-ng').value=p.numberGreen??'';
+  document.getElementById('edit-player-size').value=p.size||'';
+  document.getElementById('edit-player-pos').value=p.pos||'';
+  openModal('modal-edit-player');
+}
 
+function saveEditPlayer() {
+  const pid=document.getElementById('edit-player-id').value;
+  const nw=document.getElementById('edit-player-nw').value;
+  const ng=document.getElementById('edit-player-ng').value;
+  const size=document.getElementById('edit-player-size').value;
+  const pos=document.getElementById('edit-player-pos').value;
+  const numW=nw?Number(nw):null;
+  const numG=ng?Number(ng):null;
+  state.players=state.players.map(p=>p.id!==pid?p:{...p,
+    name:document.getElementById('edit-player-name').value,
+    number:numW??numG??null,
+    numberWhite:numW, numberGreen:numG,
+    size, pos
+  });
+  saveState(); closeModal('modal-edit-player');
+  if(currentPage==='players') renderPlayersTable();
+  if(currentPage==='player') renderPlayerPage();
+  if(currentPage==='season') renderSeasonTable();
+}
 
-// ═══════════════════════════════════════════════
-// SETTINGS
-// ═══════════════════════════════════════════════
-function renderSettings() {
-  const years = Object.keys(db.transactions).length;
-  let txCount = 0;
-  for (const y in db.transactions) for (const m in db.transactions[y]) {
-    txCount += ((db.transactions[y][m].expenses||[]).length + (db.transactions[y][m].income||[]).length);
-  }
-  const invCount = (db.investments||[]).length;
-  const size = (JSON.stringify(db).length/1024).toFixed(1);
+function openPlayer(pid, back) {
+  currentPlayerId=pid; playerBackPage=back;
+  document.getElementById('player-back-btn').onclick=()=>showPage(back);
+  showPage('player');
+}
 
-  document.getElementById('screen-settings').innerHTML = `
-    <div class="card">
-      <div class="card-hd"><span class="card-label">Vzhled aplikace</span></div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="position:relative;cursor:pointer" onclick="openIconPicker()">
-            ${db.appIcon
-              ? `<img src="${db.appIcon}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;border:2px solid var(--acc)">`
-              : `<div style="width:52px;height:52px;border-radius:12px;background:var(--bg4);border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:1.5rem">💰</div>`}
-            <div style="position:absolute;bottom:-4px;right:-4px;background:var(--acc);color:#000;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">✎</div>
+// ==================== SEASON DETAIL ====================
+function renderSeasonPage() {
+  const season = findSeason(currentSeasonId);
+  if (!season) return;
+  document.getElementById('season-detail-title').textContent = season.name;
+  const matches = getMatches(currentSeasonId);
+  const ml = document.getElementById('matches-list');
+  if (matches.length===0) { ml.innerHTML='<span style="color:var(--muted);font-size:14px;">Zatím žádné zápasy</span>'; }
+  else ml.innerHTML = matches.map((m,i)=>`
+    <div style="display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;cursor:pointer;" onclick="showMatchDetail('${m.id}')">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;color:var(--muted);min-width:22px;">#${m.number||i+1}</span>
+      <span style="font-weight:600;color:var(--dark);">${m.team}</span>
+      <span style="color:var(--green);font-size:12px;">${(()=>{const fl=feeList(currentSeasonId);const p=(m.playerIds||[]).filter(id=>fl.has(id)).length;const a=(m.absentIds||[]).filter(id=>fl.has(id)).length;return '✓ '+p+'/'+(p+a);})()}</span>
+      <span style="color:var(--red);font-size:12px;">${(()=>{const fl=feeList(currentSeasonId);return '✗ '+(m.absentIds||[]).filter(id=>fl.has(id)).length;})()}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:2px 7px;font-size:11px;" onclick="event.stopPropagation();openEditMatch('${m.id}')">✏️</button>
+      <button class="btn btn-danger btn-sm" style="padding:2px 6px;" onclick="event.stopPropagation();deleteMatch('${m.id}')">✕</button>
+    </div>`).join('');
+  renderSeasonTable();
+}
+
+function showMatchDetail(mid) {
+  const matches = getMatches(currentSeasonId);
+  const m = matches.find(x=>x.id===mid);
+  if (!m) return;
+  const presentIds = m.playerIds||[];
+  const absentIds = m.absentIds||[];
+  const _fld = feeList(currentSeasonId);
+  const present = presentIds.map(id=>findPlayer(id)).filter(p=>p&&_fld.has(p.id));
+  const absent  = absentIds.map(id=>findPlayer(id)).filter(p=>p&&_fld.has(p.id));
+  const neutral = state.players.filter(p=>_fld.has(p.id)&&!presentIds.includes(p.id)&&!absentIds.includes(p.id));
+  const denom = present.length + absent.length;
+
+  document.getElementById('match-detail-title').textContent = `#${matchNum(mid, currentSeasonId)} vs. ${m.team}`;
+  document.getElementById('match-detail-counts').innerHTML =
+    `<span style="color:var(--green);font-weight:700;">✓ ${present.length}/${denom} přítomných</span>
+     <span style="color:var(--red);font-weight:700;margin-left:12px;">✗ ${absent.length} chybí</span>`;
+
+  const row = (p, type) => {
+    const col = type==='p'?'var(--green-bg)':type==='a'?'var(--red-bg)':'var(--surface2)';
+    const border = type==='p'?'#b8e8d0':type==='a'?'#f5c2c6':'var(--border)';
+    const icon = type==='p'?'✓':type==='a'?'✗':'·';
+    const icol = type==='p'?'var(--green2)':type==='a'?'var(--red2)':'var(--muted)';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:${col};border:1px solid ${border};margin-bottom:4px;">
+      <span style="font-size:14px;font-weight:700;color:${icol};width:14px;text-align:center;">${icon}</span>
+      <span style="flex:1;font-size:14px;font-weight:600;">${p.name}</span>
+      <span style="font-size:12px;color:var(--muted);">${playerNumText(p)}</span>
+    </div>`;
+  };
+
+  let html = '';
+  if(present.length) html += `<div style="font-size:11px;font-weight:700;color:var(--green2);text-transform:uppercase;letter-spacing:1px;margin:10px 0 5px;">Přítomni (${present.length})</div>`+present.sort((a,b)=>a.name.localeCompare(b.name)).map(p=>row(p,'p')).join('');
+  if(absent.length) html += `<div style="font-size:11px;font-weight:700;color:var(--red2);text-transform:uppercase;letter-spacing:1px;margin:10px 0 5px;">Chybí (${absent.length})</div>`+absent.sort((a,b)=>a.name.localeCompare(b.name)).map(p=>row(p,'a')).join('');
+  if(neutral.length) html += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:10px 0 5px;">Bez záznamu (${neutral.length})</div>`+neutral.sort((a,b)=>a.name.localeCompare(b.name)).map(p=>row(p,'n')).join('');
+  document.getElementById('match-detail-body').innerHTML = html;
+  openModal('modal-match-detail');
+}
+
+// Hráči na fee listu sezóny (má poplatek nebo noFee) MINUS excluded
+function feeList(sid) {
+  const excluded = new Set(getSD(sid).excludedPlayerIds||[]);
+  return new Set([
+    ...getFees(sid).map(f=>f.playerId),
+    ...(getSD(sid).noFeePlayerIds||[])
+  ].filter(id=>!excluded.has(id)));
+}
+
+let seasonSort = 'name';
+let seasonDebtOnly = false;
+function setSeasonSort(col) {
+  seasonSort = col;
+  ['name','number','games','paid'].forEach(c => {
+    const el = document.getElementById('sth-'+( c==='paid'?'finance':c==='games'?'games':c==='number'?'number':'name'));
+    if(el) el.style.fontWeight = (c===col)?'800':'600';
+  });
+  renderSeasonTable();
+}
+function toggleSeasonDebt() {
+  seasonDebtOnly = !seasonDebtOnly;
+  const btn = document.getElementById('sd-debt-btn');
+  if(btn) { btn.style.background = seasonDebtOnly ? 'var(--red)' : ''; btn.style.color = seasonDebtOnly ? '#fff' : ''; }
+  renderSeasonTable();
+}
+function renderSeasonTable() {
+  const filter = document.getElementById('sd-filter').value.toLowerCase();
+  const sort = seasonSort;
+  const paidF = seasonDebtOnly ? 'unpaid' : 'all';
+  const matches = getMatches(currentSeasonId);
+
+  const _fl = feeList(currentSeasonId);
+  let rows = state.players
+    .filter(p=>_fl.has(p.id))
+    .filter(p=>p.name.toLowerCase().includes(filter))
+    .map(p=>{
+      const pr=getPresent(p.id,currentSeasonId);
+      const fee=getFee(p.id,currentSeasonId);
+      const paid = fee?fee.paid:0;
+      const amount = fee?fee.amount:0;
+      const remaining = Math.max(0, amount - paid);
+      return {p, games:pr.length, fee,
+        paid, amount, remaining,
+        isPaid:fee&&fee.paid>=fee.amount};
+    })
+    .filter(r=>{
+      if(paidF==='paid') return r.isPaid;
+      if(paidF==='unpaid') return !r.isPaid&&r.amount>0;
+      return true;
+    });
+
+  rows.sort((a,b)=>{
+    if(sort==='name') return a.p.name.localeCompare(b.p.name);
+    if(sort==='games') return b.games-a.games;
+    if(sort==='number') return (a.p.number||0)-(b.p.number||0);
+    if(sort==='paid') return b.paid-a.paid;
+    if(sort==='debt') return b.remaining-a.remaining;
+    return 0;
+  });
+
+  const rankColors=['#f4b942','#a0a0a0','#cd7f32'];
+  document.getElementById('season-tbody').innerHTML = rows.map((r,i)=>{
+    const pct = r.amount ? Math.min(100,(r.paid/r.amount)*100) : 0;
+    const rankStyle = i<3 ? `color:${rankColors[i]};font-weight:800;` : 'color:var(--muted);';
+    const feeHtml = r.amount>0
+      ? `<div style="font-size:13px;">${r.paid}&thinsp;/&thinsp;${r.amount} Kč</div>
+         <div class="fee-bar"><div class="fee-fill" style="width:${pct}%"></div></div>`
+      : `<span style="color:var(--muted)">—</span>`;
+    const stateHtml = r.fee
+      ? (r.isPaid ? `<span class="badge badge-green">✓ OK</span>`
+          : `<button class="btn btn-gold btn-sm" onclick="openPayFee('${r.p.id}','${currentSeasonId}')">Zaplatit</button>`)
+      : isNoFee(r.p.id, currentSeasonId)
+        ? `<span class="badge badge-muted" style="cursor:pointer;" onclick="clearNoFee('${r.p.id}','${currentSeasonId}')" title="Klikni pro zrušení">🚫 Nemá poplatek</span>`
+        : `<div style="display:flex;gap:4px;flex-wrap:wrap;">
+             <button class="btn btn-secondary btn-sm" onclick="openAddFee('${r.p.id}','${currentSeasonId}')">+ Poplatek</button>
+             <button class="btn btn-ghost btn-sm" onclick="setNoFee('${r.p.id}','${currentSeasonId}')" title="Označit jako bez poplatku">🚫</button>
+           </div>`;
+    const debtEmoji = r.amount > 0
+      ? (r.isPaid ? '🫡' : r.remaining > r.amount / 2 ? '😡' : '😕')
+      : '';
+    const debtLabel = r.amount > 0 && !r.isPaid
+      ? `<span style="color:var(--red);font-size:12px;font-weight:700;margin-left:6px;">−${r.remaining.toLocaleString('cs')} Kč</span>`
+      : '';
+    return `<tr class="clk" onclick="openPlayer('${r.p.id}','season')">
+      <td style="${rankStyle}">${i+1}</td>
+      <td style="font-weight:600;color:var(--dark);">${debtEmoji ? `<span style="margin-right:4px;">${debtEmoji}</span>` : ''}${r.p.name}${debtLabel}</td>
+      <td>${playerNumBadge(r.p)}</td>
+      <td><span style="color:var(--red);font-weight:700;">${r.games}</span><span style="color:var(--muted);font-size:12px;">/${matches.length}</span></td>
+      <td>${feeHtml}</td>
+      <td onclick="event.stopPropagation()">${stateHtml}</td>
+      <td onclick="event.stopPropagation()"><button class="btn btn-danger btn-sm" onclick="removePlayerFromSeason('${r.p.id}','${currentSeasonId}')" title="Odebrat z sezóny">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function setNoFee(pid, sid) {
+  const sd = getSD(sid);
+  if (!sd.noFeePlayerIds) sd.noFeePlayerIds = [];
+  if (!sd.noFeePlayerIds.includes(pid)) sd.noFeePlayerIds.push(pid);
+  state.seasonData[sid] = sd;
+  saveState();
+  renderSeasonTable();
+}
+function clearNoFee(pid, sid) {
+  // Nekliknutím hráče neodebíráme ze sezóny — otevřeme dialog pro přidání poplatku
+  openAddFee(pid, sid);
+}
+
+function removePlayerFromSeason(pid, sid) {
+  const p = findPlayer(pid);
+  if (!confirm(`Odebrat hráče "${p.name}" z této sezóny?\n\nHráč zůstane v hlavním seznamu hráčů.`)) return;
+  const sd = getSD(sid);
+  if (!sd.excludedPlayerIds) sd.excludedPlayerIds = [];
+  if (!sd.excludedPlayerIds.includes(pid)) sd.excludedPlayerIds.push(pid);
+  state.seasonData[sid] = sd;
+  saveState();
+  renderSeasonTable();
+}
+
+function deleteMatch(mid) {
+  if (!confirm('Smazat tento zápas?')) return;
+  const sd=getSD(currentSeasonId);
+  sd.matches=sd.matches.filter(m=>m.id!==mid);
+  state.seasonData[currentSeasonId]=sd;
+  saveState(); renderSeasonPage();
+}
+
+// ==================== PLAYER DETAIL ====================
+function renderPlayerPage() {
+  const p=findPlayer(currentPlayerId);
+  if (!p) return;
+  document.getElementById('player-avatar').textContent = p.numberWhite!=null ? ('#'+p.numberWhite) : (p.numberGreen!=null ? ('#'+p.numberGreen) : (p.number!=null?('#'+p.number):'?'));
+  document.getElementById('player-detail-name').textContent=p.name;
+  const nwTxt = p.numberWhite!=null?`⬜ #${p.numberWhite}`:'';
+  const ngTxt = p.numberGreen!=null?`🟩 #${p.numberGreen}`:(!nwTxt&&p.number!=null?`#${p.number}`:'');
+  const sizeTxt = p.size?`📐 ${p.size}`:'';
+  var _posIco={'t':String.fromCodePoint(9876,65039),'b':String.fromCodePoint(128737,65039),'r':String.fromCodePoint(127941)};
+  const posTxt = p.pos?(_posIco[p.pos[1]]||'')+' '+p.pos:'';
+  const subParts=[nwTxt,ngTxt,sizeTxt,posTxt].filter(Boolean);
+  document.getElementById('player-detail-sub').textContent=subParts.join('  ·  ')||'Bez informací';
+  document.getElementById('player-edit-btn').onclick=()=>openEditPlayer(p.id);
+
+  let html='';
+  state.seasons.forEach(season=>{
+    const matches=getMatches(season.id);
+    const present=getPresent(p.id,season.id);
+    const absent=getAbsent(p.id,season.id);
+    const fee=getFee(p.id,season.id);
+    const items=getPlayerItems(p.id,season.id);
+    // Show season card always — even empty, hráč může mít jen položky
+    // Skip only seasons that have nothing at all AND no matches
+    if(matches.length===0&&!fee&&items.length===0) return;
+
+    // === Poplatek za sezónu ===
+    const pct=fee&&fee.amount?Math.min(100,(fee.paid/fee.amount)*100):0;
+    const remaining=fee?(fee.amount-fee.paid):0;
+    const feeBlock=fee
+      ? `<div style="background:var(--surface2);border-radius:8px;padding:11px 13px;margin-bottom:6px;border:1px solid var(--border);">
+           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+             <div style="flex:1;min-width:0;">
+               <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:3px;">Poplatek za sezónu</div>
+               <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+                 <span style="font-size:17px;font-weight:800;font-family:'Barlow Condensed',sans-serif;color:var(--dark);">${fee.paid} Kč</span>
+                 <span style="font-size:12px;color:var(--muted);">/ ${fee.amount} Kč</span>
+                 ${fee.paid>=fee.amount
+                   ? `<span class="badge badge-green" style="font-size:10px;">✓ Splaceno</span>`
+                   : `<span class="badge badge-red" style="font-size:10px;">zbývá ${remaining} Kč</span>`}
+               </div>
+               <div class="fee-bar" style="margin-top:5px;height:5px;"><div class="fee-fill" style="width:${pct}%"></div></div>
+             </div>
+             <div style="display:flex;gap:5px;flex-shrink:0;">
+               ${fee.paid<fee.amount ? `<button class="btn btn-gold btn-sm" onclick="openPayFee('${p.id}','${season.id}')" style="font-size:11px;">+ Zaplatit</button>` : ''}
+               <button class="btn btn-ghost btn-sm" onclick="openEditFee('${p.id}','${season.id}')" style="font-size:11px;" title="Upravit">✏️</button>
+             </div>
+           </div>
+         </div>`
+      : isNoFee(p.id, season.id)
+      ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+           <span class="badge badge-muted">🚫 Nemá poplatek</span>
+           <button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="clearNoFee('${p.id}','${season.id}');renderPlayerPage()">Zrušit</button>
+         </div>`
+      : `<button class="btn btn-secondary btn-sm" style="margin-bottom:6px;" onclick="openAddFee('${p.id}','${season.id}')">+ Poplatek za sezónu</button>`;
+
+    // === Položky ===
+    const itemRows = items.map(item=>{
+      const ipct=item.amount?Math.min(100,(item.paid/item.amount)*100):0;
+      const irem=item.amount-item.paid;
+      const iDone=item.paid>=item.amount;
+      return `<div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:5px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap;">
+            <span style="font-size:14px;font-weight:700;color:var(--dark);">${item.name}</span>
+            ${iDone
+              ? `<span class="badge badge-green" style="font-size:10px;">✓ Splaceno</span>`
+              : `<span class="badge" style="background:#fff3dc;color:#7a5c1a;font-size:10px;">zbývá ${irem} Kč</span>`}
           </div>
-          <div style="flex:1">
-            <div style="font-size:.7rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Ikona aplikace</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <button onclick="openIconPicker()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--txt);font-size:.78rem;cursor:pointer">Vybrat foto</button>
-              ${db.appIcon ? `<button onclick="removeAppIcon()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--red);font-size:.78rem;cursor:pointer">Odebrat</button>` : ''}
-              ${db.appIcon ? `<button onclick="resetAppIcon()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--txt2);font-size:.78rem;cursor:pointer">Původní 💰</button>` : ''}
-            </div>
+          <div style="display:flex;align-items:baseline;gap:5px;">
+            <span style="font-size:15px;font-weight:800;font-family:'Barlow Condensed',sans-serif;">${item.paid} Kč</span>
+            <span style="font-size:12px;color:var(--muted);">/ ${item.amount} Kč</span>
           </div>
+          <div class="fee-bar" style="margin-top:4px;"><div class="fee-fill" style="width:${ipct}%;background:${iDone?'var(--green)':'var(--gold)'}"></div></div>
         </div>
-        <div>
-          <div style="font-size:.7rem;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Název aplikace</div>
-          <div style="display:flex;gap:8px">
-            <input id="app-name-inp" type="text" value="${(db.appName||'Fin Deník').replace(/"/g,'&quot;')}" placeholder="Fin Deník" style="flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);color:var(--txt);font-family:var(--sans);font-size:.85rem">
-            <button onclick="saveAppName()" style="padding:8px 14px;border-radius:6px;border:1px solid var(--acc);background:var(--acc);color:#000;font-weight:700;font-size:.82rem;cursor:pointer">Uložit</button>
-          </div>
-        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openEditItem('${p.id}','${season.id}','${item.id}')" style="padding:4px 9px;font-size:13px;flex-shrink:0;" title="Upravit">✏️</button>
+      </div>`;
+    }).join('');
+
+    const itemsBlock=`<div>
+      ${itemRows}
+      <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;margin-top:${items.length?'4':'0'}px;" onclick="openAddItem('${p.id}','${season.id}')">
+        + Přidat položku
+      </button>
+    </div>`;
+
+    const hasMoves=present.length>0||absent.length>0;
+    html+=`<div class="card" style="padding:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="card-title" style="margin:0;">${season.name}</div>
+        ${matches.length>0 ? `<span style="color:var(--red);font-family:'Barlow Condensed';font-size:20px;font-weight:800;">${present.length}/${matches.length}</span>` : ''}
       </div>
+      ${feeBlock}
+      ${itemsBlock}
+      ${hasMoves ? `<hr class="divider" style="margin:10px 0 8px;">
+      <div>${present.map(m=>`<div class="match-pill mp-present">✓ #${matchNum(m.id,season.id)} ${m.team}</div>`).join('')}${absent.map(m=>`<div class="match-pill mp-absent">✗ #${matchNum(m.id,season.id)} ${m.team}</div>`).join('')}</div>` : ''}
+    </div>`;
+  });
+
+  // Notes section
+  const notes = (findPlayer(currentPlayerId)||{}).notes||'';
+  html += `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div class="card-title" style="margin:0;">📝 Poznámky</div>
     </div>
-    <div class="card">
-      <div class="card-hd"><span class="card-label">Data</span></div>
-      <div class="setting-row" onclick="exportJSON()">
-        <div class="setting-icon yellow">📤</div>
-        <div class="setting-text"><div class="setting-title">Export JSON</div><div class="setting-desc">Stáhnout zálohu všech dat</div></div>
-        <div class="setting-arrow">›</div>
-      </div>
-      <div class="setting-row" style="position:relative">
-        <div class="setting-icon blue">📥</div>
-        <div class="setting-text"><div class="setting-title">Import JSON</div><div class="setting-desc">Načíst dříve exportovaná data</div></div>
-        <div class="setting-arrow">›</div>
-        <input type="file" accept=".json" style="position:absolute;opacity:0;inset:0;cursor:pointer" onchange="importJSON(this)">
-      </div>
-      <div class="setting-row" style="position:relative">
-        <div class="setting-icon green">📊</div>
-        <div class="setting-text"><div class="setting-title">Import Excel</div><div class="setting-desc" id="excel-status">Nahrát soubor Účty-Investice.xlsx</div></div>
-        <div class="setting-arrow">›</div>
-        <input type="file" accept=".xlsx,.xls" style="position:absolute;opacity:0;inset:0;cursor:pointer" onchange="importExcel(this)">
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-body" style="font-family:var(--mono);font-size:.78rem;color:var(--txt2);line-height:1.8">
-        <div>${years} let záznamu</div>
-        <div>${txCount} transakcí</div>
-        <div>${invCount} investic</div>
-        <div>${size} KB v paměti</div>
-        <div style="margin-top:8px;color:var(--txt3);font-size:.72rem">Data jsou uložena v localStorage prohlížeče. Pravidelně exportujte zálohu.</div>
-      </div>
-    </div>
-  `;
+    <textarea id="player-notes-ta" class="input" style="min-height:100px;resize:vertical;font-family:'Barlow',sans-serif;line-height:1.5;" placeholder="Sem si zapiš cokoliv — zdravotní omezení, vybavení, kontakt…" oninput="autoSaveNotes()">${notes}</textarea>
+  </div>`;
+
+  document.getElementById('player-seasons-list').innerHTML=html||'<div class="card" style="color:var(--muted);">Žádná data pro tohoto hráče.</div>';
 }
 
-function exportJSON() {
-  const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
+// ==================== EDIT MATCH ====================
+let editMatchPresence = {};
+
+function openEditMatch(mid) {
+  const matches = getMatches(currentSeasonId);
+  const m = matches.find(x => x.id === mid);
+  if (!m) return;
+
+  editMatchPresence = {};
+  (m.playerIds || []).forEach(id => { editMatchPresence[id] = 'present'; });
+  (m.absentIds || []).forEach(id => { editMatchPresence[id] = 'absent'; });
+
+  document.getElementById('edit-match-id').value = mid;
+  document.getElementById('edit-match-team').value = m.team;
+  document.getElementById('edit-match-number').value = m.number || (matches.indexOf(m) + 1);
+
+  const sorted = [...state.players].filter(p => feeList(currentSeasonId).has(p.id)).sort((a,b) => a.name.localeCompare(b.name));
+
+  document.getElementById('edit-match-players-list').innerHTML = sorted.map(p => {
+    const s = editMatchPresence[p.id];
+    return `<div class="pcitem${s==='present'?' cp':s==='absent'?' ca':''}" id="epc-${p.id}">
+      <div class="chkbox${s==='present'?' p':''}" id="echkp-${p.id}" onclick="toggleEditPresence('${p.id}','present')" title="Přítomen">${s==='present'?'✓':''}</div>
+      <div class="chkbox${s==='absent'?' a':''}" id="echka-${p.id}" onclick="toggleEditPresence('${p.id}','absent')" title="Chybí">${s==='absent'?'✕':''}</div>
+      <span style="flex:1;font-size:14px;">${p.name}</span>
+      <span style="color:var(--muted);font-size:12px;">${playerNumText(p)}</span>
+    </div>`;
+  }).join('');
+
+  openModal('modal-edit-match');
+}
+
+function toggleEditPresence(pid, status) {
+  editMatchPresence[pid] = editMatchPresence[pid] === status ? undefined : status;
+  const s = editMatchPresence[pid];
+  document.getElementById('epc-'+pid).className = 'pcitem'+(s==='present'?' cp':s==='absent'?' ca':'');
+  const cp = document.getElementById('echkp-'+pid);
+  const ca = document.getElementById('echka-'+pid);
+  cp.className = 'chkbox'+(s==='present'?' p':''); cp.textContent = s==='present'?'✓':'';
+  ca.className = 'chkbox'+(s==='absent'?' a':''); ca.textContent = s==='absent'?'✕':'';
+}
+
+function editMatchSelectAll() {
+  state.players.filter(p => feeList(currentSeasonId).has(p.id)).forEach(p => {
+    editMatchPresence[p.id] = 'present';
+    const s = 'present';
+    document.getElementById('epc-'+p.id).className = 'pcitem cp';
+    const cp = document.getElementById('echkp-'+p.id);
+    const ca = document.getElementById('echka-'+p.id);
+    cp.className = 'chkbox p'; cp.textContent = '✓';
+    ca.className = 'chkbox'; ca.textContent = '';
+  });
+}
+
+function editMatchClear() {
+  state.players.filter(p => feeList(currentSeasonId).has(p.id)).forEach(p => {
+    editMatchPresence[p.id] = undefined;
+    document.getElementById('epc-'+p.id).className = 'pcitem';
+    const cp = document.getElementById('echkp-'+p.id);
+    const ca = document.getElementById('echka-'+p.id);
+    cp.className = 'chkbox'; cp.textContent = '';
+    ca.className = 'chkbox'; ca.textContent = '';
+  });
+}
+
+function saveEditMatch() {
+  const mid = document.getElementById('edit-match-id').value;
+  const team = document.getElementById('edit-match-team').value.trim();
+  const newNum = parseInt(document.getElementById('edit-match-number').value);
+  if (!team) return;
+  const sd = getSD(currentSeasonId);
+
+  if (newNum) {
+    // Zajistit, že všechny zápasy mají explicitní číslo
+    sd.matches = sd.matches.map((m, i) => ({...m, number: m.number || i + 1}));
+    // Posunout čísla ostatních zápasů >= newNum o 1 výše
+    sd.matches = sd.matches.map(m => {
+      if (m.id === mid) return m;
+      if (m.number >= newNum) return {...m, number: m.number + 1};
+      return m;
+    });
+  }
+
+  // Uložit upravený zápas s novým číslem a přítomností
+  sd.matches = sd.matches.map(m => {
+    if (m.id !== mid) return m;
+    return {...m, team, number: newNum || m.number,
+      playerIds: state.players.filter(p => feeList(currentSeasonId).has(p.id) && editMatchPresence[p.id] === 'present').map(p => p.id),
+      absentIds:  state.players.filter(p => feeList(currentSeasonId).has(p.id) && editMatchPresence[p.id] === 'absent').map(p => p.id)
+    };
+  });
+
+  // Seřadit zápasy podle čísla od nejnižšího
+  sd.matches.sort((a, b) => (a.number || 0) - (b.number || 0));
+
+  state.seasonData[currentSeasonId] = sd;
+  saveState();
+  closeModal('modal-edit-match');
+  renderSeasonPage();
+}
+
+// ==================== ADD MATCH ====================
+function openAddMatch() {
+  matchPresence={};
+  const sorted=[...state.players].filter(p=>feeList(currentSeasonId).has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+  document.getElementById('match-players-list').innerHTML=sorted.map(p=>`
+    <div class="pcitem" id="pc-${p.id}">
+      <div class="chkbox" id="chkp-${p.id}" onclick="togglePresence('${p.id}','present')" title="Byl"></div>
+      <div class="chkbox" id="chka-${p.id}" onclick="togglePresence('${p.id}','absent')" title="Nebyl"></div>
+      <span style="flex:1;font-size:14px;">${p.name}</span>
+      <span style="color:var(--muted);font-size:12px;">${playerNumText(p)}</span>
+    </div>`).join('');
+  openModal('modal-add-match');
+}
+
+function togglePresence(pid,status) {
+  matchPresence[pid]=matchPresence[pid]===status?undefined:status;
+  const s=matchPresence[pid];
+  document.getElementById('pc-'+pid).className='pcitem'+(s==='present'?' cp':s==='absent'?' ca':'');
+  const cp=document.getElementById('chkp-'+pid);
+  const ca=document.getElementById('chka-'+pid);
+  cp.className='chkbox'+(s==='present'?' p':''); cp.textContent=s==='present'?'✓':'';
+  ca.className='chkbox'+(s==='absent'?' a':''); ca.textContent=s==='absent'?'✕':'';
+}
+
+function selectAllPresent() {
+  const _fl=[...feeList(currentSeasonId)].map(id=>state.players.find(p=>p.id===id)).filter(Boolean);
+  _fl.forEach(p=>{ matchPresence[p.id]=undefined; });
+  _fl.forEach(p=>togglePresence(p.id,'present'));
+}
+
+function clearPresence() {
+  const _fl=[...feeList(currentSeasonId)].map(id=>state.players.find(p=>p.id===id)).filter(Boolean);
+  _fl.forEach(p=>{
+    matchPresence[p.id]=undefined;
+    document.getElementById('pc-'+p.id).className='pcitem';
+    document.getElementById('chkp-'+p.id).className='chkbox'; document.getElementById('chkp-'+p.id).textContent='';
+    document.getElementById('chka-'+p.id).className='chkbox'; document.getElementById('chka-'+p.id).textContent='';
+  });
+}
+
+function saveMatch() {
+  const team=document.getElementById('match-team').value.trim();
+  if (!team) return;
+  const sd=getSD(currentSeasonId);
+  if(!sd.matches) sd.matches=[];
+  sd.matches.push({id:uid(), team, number: sd.matches.length+1,
+    playerIds:state.players.filter(p=>feeList(currentSeasonId).has(p.id)&&matchPresence[p.id]==='present').map(p=>p.id),
+    absentIds:state.players.filter(p=>feeList(currentSeasonId).has(p.id)&&matchPresence[p.id]==='absent').map(p=>p.id)
+  });
+  state.seasonData[currentSeasonId]=sd;
+  saveState(); closeModal('modal-add-match');
+  document.getElementById('match-team').value='';
+  renderSeasonPage();
+}
+
+// ==================== FEES ====================
+function openAddFee(pid,sid) {
+  const p=findPlayer(pid); const s=findSeason(sid);
+  document.getElementById('fee-modal-sub').textContent=`${p.name} — ${s.name}`;
+  document.getElementById('fee-player-id').value=pid;
+  document.getElementById('fee-season-id').value=sid;
+  document.getElementById('fee-amount').value='';
+  document.getElementById('fee-paid-init').value='';
+  openModal('modal-add-fee');
+}
+function saveFee() {
+  const pid=document.getElementById('fee-player-id').value;
+  const sid=document.getElementById('fee-season-id').value;
+  const amount=Number(document.getElementById('fee-amount').value);
+  const paid=Number(document.getElementById('fee-paid-init').value||0);
+  if(!amount) return;
+  const sd=getSD(sid);
+  sd.fees=(sd.fees||[]).filter(f=>f.playerId!==pid);
+  sd.fees.push({playerId:pid,amount,paid});
+  state.seasonData[sid]=sd;
+  saveState(); closeModal('modal-add-fee');
+  if(currentPage==='season') renderSeasonPage();
+  if(currentPage==='player') renderPlayerPage();
+}
+function openPayFee(pid,sid) {
+  const p=findPlayer(pid); const s=findSeason(sid);
+  const fee=getFee(pid,sid);
+  document.getElementById('pay-modal-sub').textContent=`${p.name} — ${s.name}`;
+  document.getElementById('pay-modal-info').innerHTML=`<span style="font-weight:600;">${fee.paid}&thinsp;/&thinsp;${fee.amount} Kč</span> &nbsp;<span style="color:var(--red);">Zbývá: ${fee.amount-fee.paid} Kč</span>`;
+  document.getElementById('pay-player-id').value=pid;
+  document.getElementById('pay-season-id').value=sid;
+  document.getElementById('pay-amount').value='';
+  document.getElementById('pay-amount').placeholder=fee.amount-fee.paid;
+  openModal('modal-pay-fee');
+}
+function savePayment() {
+  const pid=document.getElementById('pay-player-id').value;
+  const sid=document.getElementById('pay-season-id').value;
+  const amount=Number(document.getElementById('pay-amount').value);
+  if(!amount) return;
+  const sd=getSD(sid);
+  sd.fees=sd.fees.map(f=>f.playerId!==pid?f:{...f,paid:Math.min(f.amount,f.paid+amount)});
+  state.seasonData[sid]=sd;
+  saveState(); closeModal('modal-pay-fee');
+  if(currentPage==='season') renderSeasonPage();
+  if(currentPage==='player') renderPlayerPage();
+}
+
+// ==================== IMPORT / EXPORT ====================
+function exportData() {
+  const exportObj = { state, appSettings: {...appSettings, logoSrc: undefined} };
+  const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'fin-denik-' + new Date().toISOString().slice(0,10) + '.json';
-  a.style.display = 'none';
-  document.body.appendChild(a);
+  a.href = url;
+  const d = new Date();
+  a.download = `hokejbal_export_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
   a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 1000);
+  URL.revokeObjectURL(url);
 }
-
-function importJSON(input) {
-  const file = input.files[0]; if (!file) return;
-  const r = new FileReader();
-  r.onload = e => {
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const st = document.getElementById('import-status');
+  const reader = new FileReader();
+  reader.onload = e => {
     try {
-      const d = JSON.parse(e.target.result);
-      if (!d.transactions) throw new Error('Neplatný formát');
-      db = d;
-      save(); renderSettings();
-      alert('Data importována!');
-    } catch(err) { alert('Chyba: ' + err.message); }
-  };
-  r.readAsText(file);
-}
-
-function showLoading(msg) {
-  document.getElementById('loading-text').textContent = msg || 'Načítám...';
-  document.getElementById('loading-overlay').classList.remove('hidden');
-}
-function hideLoading() {
-  document.getElementById('loading-overlay').classList.add('hidden');
-}
-
-function importExcel(input) {
-  const file = input.files[0]; if (!file) return;
-  showLoading('Čtu soubor...');
-  const r = new FileReader();
-  r.onload = e => {
-    setTimeout(() => {
-      try {
-        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
-        const MMAP = {};
-        MONTHS_UP.forEach((m,i) => MMAP[m] = i+1);
-
-        const fmtDate = d => {
-          if (d instanceof Date && !isNaN(d)) {
-            const y = d.getFullYear(), mo = String(d.getMonth()+1).padStart(2,'0'), da = String(d.getDate()).padStart(2,'0');
-            return y + '-' + mo + '-' + da;
-          }
-          if (typeof d === 'string') { const m = d.match(/(\d{4})-(\d{2})-(\d{2})/); if (m) return d.slice(0,10); }
-          return null;
-        };
-
-        // ── 1. Transactions 2016-2026 ──────────────────────────────
-        showLoading('Načítám transakce...');
-        const yearBase = {2016:3,2017:9,2018:15,2019:21,2020:27,2021:33,2022:39,2023:45,2024:51,2025:57,2026:63};
-        const ws = wb.Sheets['2016-2026'];
-        if (!ws) throw new Error('List "2016-2026" nenalezen');
-        const data = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, cellDates:true});
-        const newTx = {};
-
-        for (const [year, bc] of Object.entries(yearBase)) {
-          newTx[year] = {};
-          let cm = null;
-          // bc is 1-indexed; convert to 0-indexed
-          const c_date = bc - 2;  // date col
-          const c_desc = bc - 1;  // description
-          const c_exp  = bc;      // Utraceno (expense, negative)
-          const c_inc  = bc + 2;  // Získáno (income, positive)
-
-          for (let i = 2; i < data.length; i++) {
-            const row = data[i];
-            const dv    = row[c_date];
-            const desc  = row[c_desc];
-            const utrac = row[c_exp];
-            const zisk  = row[c_inc];
-
-            if (typeof dv === 'string' && MMAP[dv.trim()]) {
-              cm = String(MMAP[dv.trim()]);
-              if (!newTx[year][cm]) newTx[year][cm] = {expenses:[], income:[], salary:0};
-              continue;
-            }
-            if (!cm) continue;
-            const dateStr = fmtDate(dv);
-            if (dateStr) {
-              const day = parseInt(dateStr.split('-')[2]);
-              const ua = typeof utrac==='number' ? utrac : parseFloat(utrac);
-              const za = typeof zisk==='number' ? zisk : parseFloat(zisk);
-              if (ua < 0 && desc) newTx[year][cm].expenses.push({id:uid(), day, desc:String(desc).trim(), amount:Math.abs(ua)});
-              if (za > 0) newTx[year][cm].income.push({id:uid(), day, desc:'příjem', amount:za});
-            }
-          }
-        }
-        db.transactions = newTx;
-
-        // ── 2. Salary from CELKEM (all years incl. 2012-2015) ──────
-        showLoading('Načítám výplaty...');
-        if (wb.Sheets['CELKEM']) {
-          const cdata = XLSX.utils.sheet_to_json(wb.Sheets['CELKEM'], {header:1, raw:true, cellDates:true});
-          let cy = null;
-          for (let i = 0; i < cdata.length; i++) {
-            const row = cdata[i];
-            if (typeof row[0]==='number' && row[0]>=2010 && row[0]<=2030) { cy=String(row[0]); continue; }
-            if (typeof row[1]==='number' && row[1]>=2010 && row[1]<=2030) { cy=String(row[1]); continue; }
-            if (!cy) continue;
-            if (typeof row[1]==='string' && MMAP[row[1].trim()]) {
-              const m = String(MMAP[row[1].trim()]);
-              if (!db.transactions[cy]) db.transactions[cy] = {};
-              if (!db.transactions[cy][m]) db.transactions[cy][m] = {expenses:[], income:[], salary:0};
-              if (typeof row[2]==='number' && row[2] > 0) db.transactions[cy][m].salary = row[2];
-            }
-          }
-        }
-
-        // ── 3. Investments ─────────────────────────────────────────
-        showLoading('Načítám investice...');
-        if (wb.Sheets['Investice']) {
-          const idata = XLSX.utils.sheet_to_json(wb.Sheets['Investice'], {header:1, raw:true, cellDates:true});
-          const invs = [];
-
-          const addInv = (type, dateRaw, broker, ticker, name, qtyRaw, priceRaw, currency) => {
-            const d = fmtDate(dateRaw);
-            if (!d) return;
-            const price = typeof priceRaw==='number' ? priceRaw : parseFloat(String(priceRaw||'').replace(',','.'));
-            if (!price || isNaN(price)) return;
-            const qty = typeof qtyRaw==='number' ? Math.abs(qtyRaw) : (parseFloat(String(qtyRaw||'1').replace(',','.').replace(/[^0-9.]/g,'')) || 1);
-            invs.push({id:uid(), type, date:d, broker, ticker:String(ticker||''), name:String(name||''), quantity:qty, price, currency});
-          };
-
-          for (let i = 2; i < idata.length; i++) {
-            const row = idata[i];
-            if (row[0]==='Nákup'||row[0]==='Prodej') addInv(row[0],row[1],'DEGIRO',row[3],row[4],row[2],row[5],'EUR');
-            if (row[7]==='Nákup'||row[7]==='Prodej') addInv(row[7],row[8],'Interactive Brokers',row[10],row[11],row[9],row[12],'USD');
-            if (row[14]==='Nákup'||row[14]==='Prodej') {
-              const pr = row[17];
-              const prStr = String(pr||'');
-              if (prStr.includes('ETH')) {
-                const qty = parseFloat(prStr.replace(',','.').replace(/[^0-9.]/g,''));
-                const d = fmtDate(row[15]);
-                if (qty && d) invs.push({id:uid(),type:row[14],date:d,broker:'Bitcoin',ticker:'ETH',name:'Ethereum',quantity:qty,price:0,currency:'ETH'});
-              } else if (typeof pr==='number' && pr > 0) {
-                addInv(row[14],row[15],'Bitcoin','BTC','Bitcoin',1,pr,'CZK');
-              }
-            }
-            if (row[23]==='Nákup'||row[23]==='Prodej') {
-              const nm = String(row[25]||'');
-              const tk = nm.toLowerCase().includes('s&p') ? 'CSPX' : nm.toLowerCase().includes('world') ? 'IWDA' : 'ETF';
-              addInv(row[23],row[24],'Raiffeisen DIP',tk,nm,row[26],row[27],'EUR');
-            }
-          }
-          db.investments = invs;
-        }
-
-        save();
-        hideLoading();
-        let txTotal = 0;
-        for (const y in db.transactions) for (const m in db.transactions[y]) {
-          txTotal += (db.transactions[y][m].expenses||[]).length + (db.transactions[y][m].income||[]).length;
-        }
-        document.getElementById('excel-status').textContent = `✓ ${Object.keys(db.transactions).length} let, ${txTotal} transakcí, ${(db.investments||[]).length} investic`;
-        renderSettings();
-      } catch(err) {
-        hideLoading();
-        document.getElementById('excel-status').textContent = 'Chyba: ' + err.message;
-        console.error(err);
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.state || !parsed.state.players || !parsed.state.seasons) {
+        st.innerHTML = '<span style="color:var(--red);">❌ Neplatný soubor — chybí data.</span>';
+        return;
       }
-    }, 80);
+      if (!confirm(`Import přepíše všechna současná data (${parsed.state.players.length} hráčů, ${parsed.state.seasons.length} sezón). Pokračovat?`)) return;
+      state = parsed.state;
+      if (parsed.appSettings) {
+        appSettings = {...appSettings, ...parsed.appSettings};
+        applySettings();
+      }
+      saveState(); saveSettings();
+      st.innerHTML = `<span style="color:var(--green2);">✓ Import úspěšný — ${state.players.length} hráčů, ${state.seasons.length} sezón načteno.</span>`;
+      initSettings();
+    } catch(err) {
+      st.innerHTML = '<span style="color:var(--red);">❌ Chyba při čtení souboru: ' + err.message + '</span>';
+    }
   };
-  r.readAsArrayBuffer(file);
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
-function resetData() {
-  if (!confirm('OPRAVDU smazat všechna data? Tato akce je nevratná!')) return;
-  db = {transactions:{}, investments:[]};
-  save(); navTo('home');
+// ==================== SETTINGS ====================
+function initSettings() {
+  document.getElementById('set-app-name').value=appSettings.name;
+  document.getElementById('set-logo-size').value=appSettings.logoSize;
+  document.getElementById('set-logo-size-val').textContent=appSettings.logoSize+'px';
+  document.getElementById('set-logo-ox').value=appSettings.logoOffsetX;
+  document.getElementById('set-logo-ox-val').textContent=appSettings.logoOffsetX+'px';
+  document.getElementById('set-logo-oy').value=appSettings.logoOffsetY;
+  document.getElementById('set-logo-oy-val').textContent=appSettings.logoOffsetY+'px';
+  document.getElementById('logo-preview-img').src=appSettings.logoSrc||DEFAULT_LOGO;
 }
 
-// ═══════════════════════════════════════════════
-// Year / modal helpers
-// ═══════════════════════════════════════════════
-function saveNewYear() {
-  const y = parseInt(document.getElementById('add-year-inp').value);
-  if (!y || y < 2000 || y > 2099) { alert('Neplatný rok'); return; }
-  if (!db.transactions[y]) db.transactions[y] = {};
-  save();
-  closeModal('modal-year');
-  renderYears();
+function saveAppSettings() {
+  appSettings.name=document.getElementById('set-app-name').value||'Hokejbal';
+  applySettings(); saveSettings();
 }
 
-function deleteYear(year) {
-  const yd = db.transactions[year] || {};
-  let txCount = 0;
-  for (const m in yd) txCount += ((yd[m].expenses||[]).length + (yd[m].income||[]).length);
-  const msg = txCount > 0
-    ? `Smazat rok ${year} včetně ${txCount} transakcí? Tato akce je nevratná.`
-    : `Smazat rok ${year}?`;
-  if (!confirm(msg)) return;
-  delete db.transactions[year];
-  save();
-  goBack();
+function updateLogoLive() {
+  const size=Number(document.getElementById('set-logo-size').value);
+  const ox=Number(document.getElementById('set-logo-ox').value);
+  const oy=Number(document.getElementById('set-logo-oy').value);
+  document.getElementById('set-logo-size-val').textContent=size+'px';
+  document.getElementById('set-logo-ox-val').textContent=ox+'px';
+  document.getElementById('set-logo-oy-val').textContent=oy+'px';
+  // Live preview on header
+  const img=document.getElementById('header-logo');
+  img.style.width=size+'px'; img.style.height=size+'px';
+  img.style.transform=`translate(${ox}px,${oy}px)`;
 }
 
-function deleteMonth(year, month) {
-  const md = getMD(year, month);
-  const txCount = (md.expenses||[]).length + (md.income||[]).length;
-  const msg = txCount > 0
-    ? `Smazat ${MONTHS[month-1]} ${year} včetně ${txCount} transakcí? Tato akce je nevratná.`
-    : `Smazat ${MONTHS[month-1]} ${year}?`;
-  if (!confirm(msg)) return;
-  if (db.transactions[year]) {
-    delete db.transactions[year][month];
-    if (!Object.keys(db.transactions[year]).length) delete db.transactions[year];
+function saveLogoSettings() {
+  appSettings.logoSize=Number(document.getElementById('set-logo-size').value);
+  appSettings.logoOffsetX=Number(document.getElementById('set-logo-ox').value);
+  appSettings.logoOffsetY=Number(document.getElementById('set-logo-oy').value);
+  appSettings.logoSrc=document.getElementById('logo-preview-img').src;
+  applySettings(); saveSettings();
+  injectPWAManifest(appSettings.logoSrc);
+}
+
+function centerLogo() {
+  document.getElementById('set-logo-ox').value=0;
+  document.getElementById('set-logo-oy').value=0;
+  updateLogoLive();
+}
+
+function resetLogo() {
+  document.getElementById('logo-preview-img').src=DEFAULT_LOGO;
+  document.getElementById('header-logo').src=DEFAULT_LOGO;
+  appSettings.logoSrc=DEFAULT_LOGO;
+}
+
+function handleLogoUpload(event) {
+  const file=event.target.files[0];
+  if (!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const src=e.target.result;
+    document.getElementById('logo-preview-img').src=src;
+    document.getElementById('header-logo').src=src;
+    appSettings.logoSrc=src;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ==================== SEASON PICK PLAYERS FROM LIST ====================
+let sppSelected = {};
+function openSeasonPickPlayers() {
+  sppSelected = {};
+  document.getElementById('spp-filter').value = '';
+  const season = findSeason(currentSeasonId);
+  document.getElementById('spp-sub').textContent = `Sezóna: ${season.name}`;
+  renderSeasonPickList();
+  openModal('modal-season-pick-players');
+}
+function sppAvailable() {
+  const inSeason = feeList(currentSeasonId);
+  const filter = (document.getElementById('spp-filter')||{}).value||'';
+  return state.players
+    .filter(p => !inSeason.has(p.id))
+    .filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
+    .sort((a,b) => a.name.localeCompare(b.name));
+}
+function renderSeasonPickList() {
+  const players = sppAvailable();
+  const list = document.getElementById('spp-list');
+  const countEl = document.getElementById('spp-count');
+  const chosen = Object.values(sppSelected).filter(Boolean).length;
+  if (countEl) countEl.textContent = chosen > 0 ? `Vybráno: ${chosen}` : `${players.length} hráčů mimo sezónu`;
+  if (players.length === 0) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:14px;">Všichni hráči jsou již v sezóně.</div>';
+    return;
   }
-  save();
-  goBack();
+  list.innerHTML = players.map(p => {
+    const sel = !!sppSelected[p.id];
+    return `<div class="pcitem${sel?' cp':''}" id="spp-${p.id}" onclick="toggleSpp('${p.id}')">
+      <div class="chkbox${sel?' p':''}" id="sppchk-${p.id}">${sel?'✓':''}</div>
+      <span style="flex:1;font-size:14px;font-weight:600;">${p.name}</span>
+      <span style="font-size:12px;color:var(--muted);">${playerNumText(p)}</span>
+      ${p.pos ? `<span style="font-size:11px;color:var(--muted);">${p.pos}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+function toggleSpp(pid) {
+  sppSelected[pid] = !sppSelected[pid];
+  const el = document.getElementById('spp-'+pid);
+  const chk = document.getElementById('sppchk-'+pid);
+  const sel = !!sppSelected[pid];
+  el.className = 'pcitem' + (sel?' cp':'');
+  chk.className = 'chkbox' + (sel?' p':'');
+  chk.textContent = sel ? '✓' : '';
+  const countEl = document.getElementById('spp-count');
+  const chosen = Object.values(sppSelected).filter(Boolean).length;
+  if (countEl) countEl.textContent = chosen > 0 ? `Vybráno: ${chosen}` : `${sppAvailable().length} hráčů mimo sezónu`;
+}
+function sppSelectAll() {
+  sppAvailable().forEach(p => { sppSelected[p.id] = true; });
+  renderSeasonPickList();
+}
+function sppSelectNone() {
+  sppSelected = {};
+  renderSeasonPickList();
+}
+function saveSeasonPick() {
+  const chosen = Object.keys(sppSelected).filter(id => sppSelected[id]);
+  if (chosen.length === 0) { closeModal('modal-season-pick-players'); return; }
+  const sd = getSD(currentSeasonId);
+  if (!sd.noFeePlayerIds) sd.noFeePlayerIds = [];
+  if (!sd.excludedPlayerIds) sd.excludedPlayerIds = [];
+  chosen.forEach(pid => {
+    if (!sd.noFeePlayerIds.includes(pid)) sd.noFeePlayerIds.push(pid);
+    sd.excludedPlayerIds = sd.excludedPlayerIds.filter(id => id !== pid);
+  });
+  state.seasonData[currentSeasonId] = sd;
+  saveState();
+  closeModal('modal-season-pick-players');
+  renderSeasonPage();
 }
 
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// ==================== SEASON ADD PLAYER ====================
+function openSeasonAddPlayer() {
+  ['sap-name','sap-nw','sap-ng'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sap-size').value='';
+  document.getElementById('sap-pos').value='';
+  openModal('modal-season-add-player');
+}
+function addPlayerToSeason() {
+  const name=document.getElementById('sap-name').value.trim();
+  if(!name) return;
+  const nw=document.getElementById('sap-nw').value;
+  const ng=document.getElementById('sap-ng').value;
+  const size=document.getElementById('sap-size').value;
+  const pos=document.getElementById('sap-pos').value;
+  const numW=nw?Number(nw):null;
+  const numG=ng?Number(ng):null;
+  // Check if player already exists (case-insensitive name match)
+  let player=state.players.find(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(!player) {
+    player={id:uid(),name,number:numW??numG??null,numberWhite:numW,numberGreen:numG,size,pos};
+    state.players.push(player);
+  }
+  // Pokud byl hráč odebrán ze sezóny, znovu ho přidat
+  const sd2 = getSD(currentSeasonId);
+  if (sd2.excludedPlayerIds) {
+    sd2.excludedPlayerIds = sd2.excludedPlayerIds.filter(id => id !== player.id);
+    state.seasonData[currentSeasonId] = sd2;
+  }
+  saveState(); closeModal('modal-season-add-player');
+  if(currentPage==='players') renderPlayersTable();
+  renderSeasonPage();
+}
 
-// Close modal on bg click
-document.querySelectorAll('.modal-bg').forEach(bg => {
-  bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); });
-});
+// ==================== BULK FEE ====================
+let bulkSelected={};
+function openBulkFee() {
+  const season=findSeason(currentSeasonId);
+  document.getElementById('bulk-fee-sub').textContent=`Sezóna: ${season.name}`;
+  document.getElementById('bulk-fee-amount').value='';
+  // Build player checklist
+  bulkSelected={};
+  const excluded = getSD(currentSeasonId).excludedPlayerIds || [];
+  const sorted=[...state.players].filter(p=>!excluded.includes(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+  sorted.forEach(p=>{ bulkSelected[p.id]=true; }); // select all by default
+  renderBulkList(sorted);
+  openModal('modal-bulk-fee');
+}
+function renderBulkList(players) {
+  const list=document.getElementById('bulk-player-list');
+  const sorted=players||[...state.players].sort((a,b)=>a.name.localeCompare(b.name));
+  list.innerHTML=sorted.map(p=>{
+    const sel=bulkSelected[p.id];
+    const existingFee=getFee(p.id,currentSeasonId);
+    return `<div class="pcitem ${sel?'cp':''}" id="bpk-${p.id}" onclick="toggleBulk('${p.id}')">
+      <div class="chkbox ${sel?'p':''}" id="bchk-${p.id}">${sel?'✓':''}</div>
+      <span style="flex:1;font-size:14px;">${p.name}</span>
+      <span style="font-size:11px;color:var(--muted);">${playerNumText(p)}</span>
+      ${existingFee?`<span class="badge badge-muted" style="font-size:10px;">má poplatek</span>`:''}
+    </div>`;
+  }).join('');
+}
+function toggleBulk(pid) {
+  bulkSelected[pid]=!bulkSelected[pid];
+  const el=document.getElementById('bpk-'+pid);
+  const chk=document.getElementById('bchk-'+pid);
+  el.className='pcitem'+(bulkSelected[pid]?' cp':'');
+  chk.className='chkbox'+(bulkSelected[pid]?' p':'');
+  chk.textContent=bulkSelected[pid]?'✓':'';
+}
+function bulkSelectAll() {
+  state.players.forEach(p=>{ bulkSelected[p.id]=true; });
+  renderBulkList();
+}
+function bulkSelectNone() {
+  state.players.forEach(p=>{ bulkSelected[p.id]=false; });
+  renderBulkList();
+}
+function saveBulkFee() {
+  const amount=Number(document.getElementById('bulk-fee-amount').value);
+  if(!amount) { alert('Zadej výši poplatku.'); return; }
+  const selected=state.players.filter(p=>bulkSelected[p.id]);
+  if(selected.length===0) { alert('Vyber alespoň jednoho hráče.'); return; }
+  const sd=getSD(currentSeasonId);
+  if(!sd.fees) sd.fees=[];
+  selected.forEach(p=>{
+    const idx=sd.fees.findIndex(f=>f.playerId===p.id);
+    if(idx>=0) sd.fees[idx]={...sd.fees[idx],amount};
+    else sd.fees.push({playerId:p.id,amount,paid:0});
+  });
+  state.seasonData[currentSeasonId]=sd;
+  saveState(); closeModal('modal-bulk-fee');
+  renderSeasonPage();
+}
 
-// Pre-fill today in inv date
-document.getElementById('inv-date').value = new Date().toISOString().split('T')[0];
+// ==================== PLAYER TOTAL DEBT ====================
+function openPlayerDebt() {
+  const p = findPlayer(currentPlayerId);
+  if (!p) return;
+  document.getElementById('player-debt-sub').textContent = p.name;
 
-// ═══════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════
-load();
-navTo('home');
-fetchCryptoRates();
+  let totalPaid = 0, totalAmount = 0;
+  const rows = [];
+
+  state.seasons.forEach(season => {
+    const fee = getFee(p.id, season.id);
+    const items = getPlayerItems(p.id, season.id);
+    if (!fee && items.length === 0) return;
+
+    let sPaid = 0, sAmount = 0;
+    const lineItems = [];
+
+    if (fee) {
+      sPaid += fee.paid || 0;
+      sAmount += fee.amount || 0;
+      const fRem = (fee.amount || 0) - (fee.paid || 0);
+      lineItems.push({ name: 'Sezónní poplatek', paid: fee.paid || 0, amount: fee.amount || 0, rem: fRem });
+    }
+    items.forEach(item => {
+      sPaid += item.paid || 0;
+      sAmount += item.amount || 0;
+      const iRem = (item.amount || 0) - (item.paid || 0);
+      lineItems.push({ name: item.name, paid: item.paid || 0, amount: item.amount || 0, rem: iRem });
+    });
+
+    totalPaid += sPaid;
+    totalAmount += sAmount;
+    rows.push({ seasonName: season.name, paid: sPaid, amount: sAmount, rem: sAmount - sPaid, items: lineItems });
+  });
+
+  const totalRemaining = Math.max(0, totalAmount - totalPaid);
+  document.getElementById('debt-total-remaining').textContent = totalRemaining.toLocaleString('cs') + ' Kč';
+  document.getElementById('debt-total-paid').textContent = totalPaid.toLocaleString('cs') + ' Kč';
+  document.getElementById('debt-total-amount').textContent = totalAmount.toLocaleString('cs') + ' Kč';
+
+  const container = document.getElementById('debt-seasons-list');
+  if (rows.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:14px;padding:16px;">Žádné poplatky ani položky.</div>';
+  } else {
+    container.innerHTML = rows.map(r => {
+      const allPaid = r.rem <= 0;
+      const pct = r.amount ? Math.min(100, (r.paid / r.amount) * 100) : 0;
+      const itemsHtml = r.items.map(it => {
+        const iDone = it.rem <= 0;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--border);">
+          <span style="font-size:13px;color:var(--muted);">${it.name}</span>
+          <span style="font-size:13px;font-weight:600;color:${iDone ? 'var(--green2)' : it.rem > 0 ? 'var(--red2)' : 'var(--dark)'};">
+            ${it.rem > 0 ? '−' + it.rem.toLocaleString('cs') + ' Kč' : '<span style="color:var(--green2);">✓ splaceno</span>'}
+            <span style="font-size:11px;color:var(--muted);font-weight:400;"> (${it.paid.toLocaleString('cs')} / ${it.amount.toLocaleString('cs')} Kč)</span>
+          </span>
+        </div>`;
+      }).join('');
+      return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:1px;">${r.seasonName}</span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:${allPaid ? 'var(--green2)' : 'var(--red2)'};">
+            ${allPaid ? '✓ Splaceno' : '−' + Math.max(0, r.rem).toLocaleString('cs') + ' Kč'}
+          </span>
+        </div>
+        <div class="fee-bar" style="margin-bottom:8px;"><div class="fee-fill" style="width:${pct}%;background:${allPaid ? 'var(--green)' : 'var(--gold)'};"></div></div>
+        ${itemsHtml}
+      </div>`;
+    }).join('');
+  }
+
+  openModal('modal-player-debt');
+}
+
+// ==================== SEASON PAID SUMMARY ====================
+function openSeasonPaidSummary() {
+  const season = findSeason(currentSeasonId);
+  const fees = getFees(currentSeasonId);
+  document.getElementById('season-paid-sub').textContent = `Sezóna: ${season.name}`;
+
+  const totalPaid = fees.reduce((s, f) => s + (f.paid || 0), 0);
+  const totalAmount = fees.reduce((s, f) => s + (f.amount || 0), 0);
+  const totalRemaining = Math.max(0, totalAmount - totalPaid);
+
+  document.getElementById('season-paid-total').textContent = totalPaid.toLocaleString('cs') + ' Kč';
+  document.getElementById('season-paid-remaining').textContent = totalRemaining.toLocaleString('cs') + ' Kč';
+
+  const sorted = fees
+    .map(f => {
+      const player = state.players.find(p => p.id === f.playerId);
+      return { name: player ? player.name : '?', number: player ? player.number : null, paid: f.paid || 0, amount: f.amount || 0 };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const list = document.getElementById('season-paid-list');
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:14px;">Žádné poplatky v sezóně.</div>';
+  } else {
+    list.innerHTML = sorted.map((r, i) => {
+      const pct = r.amount ? Math.min(100, (r.paid / r.amount) * 100) : 0;
+      const done = r.paid >= r.amount && r.amount > 0;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:${i < sorted.length - 1 ? '1px solid var(--border)' : 'none'};">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--dark);">${r.name}${r.number != null ? ` <span style="color:var(--muted);font-size:12px;">#${r.number}</span>` : ''}</div>
+          <div class="fee-bar" style="margin-top:5px;"><div class="fee-fill" style="width:${pct}%;background:${done ? 'var(--green)' : 'var(--gold)'};"></div></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:14px;font-weight:700;color:${done ? 'var(--green2)' : 'var(--dark)'};">${r.paid.toLocaleString('cs')} Kč</div>
+          <div style="font-size:11px;color:var(--muted);">/ ${r.amount.toLocaleString('cs')} Kč</div>
+        </div>
+        ${done ? '<span class="badge badge-green" style="flex-shrink:0;">✓</span>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  openModal('modal-season-paid');
+}
+
+// ==================== NOTES ====================
+function autoSaveNotes() {
+  const ta = document.getElementById('player-notes-ta');
+  if (!ta) return;
+  state.players = state.players.map(p => p.id!==currentPlayerId ? p : {...p, notes: ta.value});
+  saveState();
+}
+
+// ==================== ITEMS ====================
+function getPlayerItems(pid,sid) {
+  const sd=getSD(sid);
+  return (sd.items||[]).filter(i=>i.playerId===pid);
+}
+function openAddItem(pid,sid) {
+  const p=findPlayer(pid); const s=findSeason(sid);
+  document.getElementById('item-modal-title').textContent='Přidat položku';
+  document.getElementById('item-modal-sub').textContent=`${p.name} — ${s.name}`;
+  document.getElementById('item-player-id').value=pid;
+  document.getElementById('item-season-id').value=sid;
+  document.getElementById('item-id').value='';
+  document.getElementById('item-name-input').value='';
+  document.getElementById('item-amount').value='';
+  document.getElementById('item-paid').value='0';
+  document.getElementById('item-remaining').textContent='—';
+  document.getElementById('item-delete-btn').style.display='none';
+  openModal('modal-item');
+}
+function openEditItem(pid,sid,iid) {
+  const p=findPlayer(pid); const s=findSeason(sid);
+  const sd=getSD(sid);
+  const item=(sd.items||[]).find(i=>i.id===iid);
+  if(!item) return;
+  document.getElementById('item-modal-title').textContent='Upravit položku';
+  document.getElementById('item-modal-sub').textContent=`${p.name} — ${s.name}`;
+  document.getElementById('item-player-id').value=pid;
+  document.getElementById('item-season-id').value=sid;
+  document.getElementById('item-id').value=iid;
+  document.getElementById('item-name-input').value=item.name;
+  document.getElementById('item-amount').value=item.amount;
+  document.getElementById('item-paid').value=item.paid;
+  document.getElementById('item-delete-btn').style.display='inline-flex';
+  updateItemRemaining();
+  openModal('modal-item');
+}
+function updateItemRemaining() {
+  const amount=Number(document.getElementById('item-amount').value)||0;
+  const paid=Number(document.getElementById('item-paid').value)||0;
+  const rem=Math.max(0,amount-paid);
+  const el=document.getElementById('item-remaining');
+  el.textContent=rem+' Kč';
+  el.style.color=rem===0?'var(--green2)':'var(--red2)';
+}
+function saveItem() {
+  const pid=document.getElementById('item-player-id').value;
+  const sid=document.getElementById('item-season-id').value;
+  const iid=document.getElementById('item-id').value;
+  const name=document.getElementById('item-name-input').value.trim();
+  const amount=Number(document.getElementById('item-amount').value)||0;
+  const paid=Math.min(amount,Number(document.getElementById('item-paid').value)||0);
+  if(!name) return;
+  const sd=getSD(sid);
+  if(!sd.items) sd.items=[];
+  if(iid) {
+    sd.items=sd.items.map(i=>i.id!==iid?i:{...i,name,amount,paid});
+  } else {
+    sd.items.push({id:uid(),playerId:pid,name,amount,paid});
+  }
+  state.seasonData[sid]=sd;
+  saveState(); closeModal('modal-item');
+  renderPlayerPage();
+}
+function deleteItem() {
+  if(!confirm('Smazat tuto položku?')) return;
+  const pid=document.getElementById('item-player-id').value;
+  const sid=document.getElementById('item-season-id').value;
+  const iid=document.getElementById('item-id').value;
+  const sd=getSD(sid);
+  sd.items=(sd.items||[]).filter(i=>i.id!==iid);
+  state.seasonData[sid]=sd;
+  saveState(); closeModal('modal-item');
+  renderPlayerPage();
+}
+
+// ==================== EDIT FEE ====================
+function openEditFee(pid,sid) {
+  const p=findPlayer(pid); const s=findSeason(sid);
+  const fee=getFee(pid,sid);
+  if(!fee) return;
+  document.getElementById('edit-fee-sub').textContent=`${p.name} — ${s.name}`;
+  document.getElementById('edit-fee-player-id').value=pid;
+  document.getElementById('edit-fee-season-id').value=sid;
+  document.getElementById('edit-fee-amount').value=fee.amount;
+  document.getElementById('edit-fee-paid').value=fee.paid;
+  updateEditFeeRemaining();
+  openModal('modal-edit-fee');
+}
+function updateEditFeeRemaining() {
+  const amount=Number(document.getElementById('edit-fee-amount').value)||0;
+  const paid=Number(document.getElementById('edit-fee-paid').value)||0;
+  const rem=Math.max(0,amount-paid);
+  document.getElementById('edit-fee-remaining').textContent=rem+' Kč';
+  document.getElementById('edit-fee-remaining').style.color=rem===0?'var(--green2)':'var(--red2)';
+}
+function saveEditFee() {
+  const pid=document.getElementById('edit-fee-player-id').value;
+  const sid=document.getElementById('edit-fee-season-id').value;
+  const amount=Number(document.getElementById('edit-fee-amount').value);
+  const paid=Number(document.getElementById('edit-fee-paid').value||0);
+  if(!amount&&amount!==0) return;
+  const sd=getSD(sid);
+  sd.fees=(sd.fees||[]).map(f=>f.playerId!==pid?f:{...f,amount,paid:Math.min(amount,paid)});
+  state.seasonData[sid]=sd;
+  saveState(); closeModal('modal-edit-fee');
+  renderPlayerPage();
+  if(currentPage==='season') renderSeasonPage();
+}
+function deleteFee() {
+  if(!confirm('Smazat poplatek pro tohoto hráče v této sezóně?')) return;
+  const pid=document.getElementById('edit-fee-player-id').value;
+  const sid=document.getElementById('edit-fee-season-id').value;
+  const sd=getSD(sid);
+  sd.fees=(sd.fees||[]).filter(f=>f.playerId!==pid);
+  state.seasonData[sid]=sd;
+  saveState(); closeModal('modal-edit-fee');
+  renderPlayerPage();
+}
+
+// ==================== INIT ====================
+loadAll();
+applySettings();
+injectPWAManifest(appSettings.logoSrc);
+renderHome();
 </script>
-<div class="loading-overlay hidden" id="loading-overlay">
-  <div class="loading-spinner"></div>
-  <div class="loading-text" id="loading-text">Načítám Excel...</div>
-</div>
 
-<!-- Icon crop modal -->
-<div id="crop-modal-bg" class="hidden">
-  <div id="crop-modal">
-    <div style="font-weight:700;font-size:.9rem">Vybrat výřez ikony</div>
-    <div id="crop-canvas-wrap">
-      <img id="crop-img" src="" alt="">
-      <div class="crop-overlay"></div>
-    </div>
-    <div style="font-size:.75rem;color:var(--txt3)">Zoom</div>
-    <input id="crop-zoom" type="range" min="0.05" max="3" step="0.01" value="1">
-    <div class="crop-btns">
-      <button onclick="closeCropModal()">Zrušit</button>
-      <button onclick="fillCrop()">Vyplnit</button>
-      <button class="primary" onclick="confirmCrop()">Použít</button>
-    </div>
-  </div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<script>
+(function () {
+  // ── Normalizace ────────────────────────────────────────────
+  function norm(s) {
+    return (s || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[.,!?;:]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
 
+  // ── Hráči z DOMu ──────────────────────────────────────────
+  function getPlayers() {
+    return Array.from(document.querySelectorAll('#match-players-list .pcitem')).map(el => {
+      const id = el.id.replace('pc-', '');
+      const name = Array.from(el.querySelectorAll('span')).find(s => s.textContent.trim().length > 2)?.textContent?.trim() || '';
+      return { id, name, normName: norm(name) };
+    }).filter(p => p.name);
+  }
+
+  // ── Fuse matching ──────────────────────────────────────────
+  function matchPlayers(text) {
+    const players = getPlayers();
+    if (!players.length) return [];
+    const fuse = new Fuse(players, { keys: ['normName'], threshold: 0.4, includeScore: true, minMatchCharLength: 3 });
+    const found = new Map();
+    norm(text).split(' ').filter(w => w.length >= 3).forEach(w =>
+      fuse.search(w).forEach(r => { if (!found.has(r.item.id)) found.set(r.item.id, r.item); })
+    );
+    return Array.from(found.values());
+  }
+
+  // ── UI ─────────────────────────────────────────────────────
+  function setStatus(txt, dot) {
+    document.getElementById('voiceStatus').textContent = txt;
+    document.getElementById('voiceDot').style.background = dot || '#aaa';
+  }
+  function logLine(txt, color) {
+    const el = document.getElementById('voiceLog');
+    if (el.children.length >= 6) el.removeChild(el.firstChild);
+    const d = document.createElement('div');
+    d.textContent = txt; d.style.color = color || '#444';
+    el.appendChild(d);
+  }
+  function setMicActive(on) {
+    const btn = document.getElementById('voiceMicBtn');
+    const lbl = document.getElementById('voiceMicLbl');
+    if (on) {
+      btn.style.cssText = 'width:64px;height:64px;border-radius:50%;border:2px solid #e8433a;background:#e8433a;font-size:28px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#fff;animation:vpulse 1.2s ease infinite;';
+      btn.textContent = '⏹';
+      lbl.textContent = 'Poslouchám... klepni pro stop nebo řekni "konec"';
+    } else {
+      btn.style.cssText = 'width:64px;height:64px;border-radius:50%;border:2px solid #ccc;background:#fff;font-size:28px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;';
+      btn.textContent = '🎙️';
+      lbl.textContent = 'Klepni a říkej příjmení za příjmením';
+    }
+  }
+
+  // ── Web Speech API ─────────────────────────────────────────
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recog = null;
+  let listening = false;
+  // Sada již přidaných hráčů v tomto sezení — aby se nepřidávali dvakrát
+  let addedIds = new Set();
+
+  function initRecog() {
+    recog = new SpeechRecognition();
+    recog.lang = 'cs-CZ';
+    recog.continuous = true;       // nepřestává po tichu
+    recog.interimResults = false;  // jen finální výsledky
+    recog.maxAlternatives = 3;
+
+    recog.onstart = () => {
+      listening = true;
+      setMicActive(true);
+      setStatus('🎙 Poslouchám...', '#22c55e');
+    };
+
+    recog.onresult = (event) => {
+      // Projdeme všechny alternativy každého výsledku
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (!result.isFinal) continue;
+
+        // Zkusíme všechny alternativy — bereme tu s nejlepší shodou
+        let bestMatches = [];
+        for (let a = 0; a < result.length; a++) {
+          const txt = result[a].transcript;
+          // "Konec" → ukončit
+          if (norm(txt).match(/\bkonec\b|\bhotovo\b/)) {
+            stopListening();
+            document.querySelectorAll('#match-players-list .pcitem').forEach(item => {
+              if (!item.classList.contains('cp') && !item.classList.contains('ca'))
+                window.togglePresence?.(item.id.replace('pc-', ''), 'absent');
+            });
+            logLine('✅ Hotovo — zbytek označen jako chybí', '#22c55e');
+            return;
+          }
+          const m = matchPlayers(txt);
+          if (m.length > bestMatches.length) bestMatches = m;
+        }
+
+        // Odfiltrovat již přidané
+        const fresh = bestMatches.filter(p => !addedIds.has(p.id));
+        if (fresh.length > 0) {
+          fresh.forEach(p => {
+            window.togglePresence?.(p.id, 'present');
+            addedIds.add(p.id);
+          });
+          logLine('✅ ' + fresh.map(p => p.name).join(', '), '#22c55e');
+        } else if (bestMatches.length === 0) {
+          const raw = result[0].transcript.trim();
+          logLine('❓ "' + raw + '"', '#f59e0b');
+        }
+      }
+    };
+
+    recog.onerror = (e) => {
+      if (e.error === 'no-speech') return; // ignorovat ticho
+      if (e.error === 'aborted') return;
+      setStatus('❌ ' + e.error, '#e8433a');
+      listening = false; setMicActive(false);
+    };
+
+    recog.onend = () => {
+      // Pokud stále má běžet — restartuj (Android ukončí po tichu)
+      if (listening) {
+        try { recog.start(); } catch {}
+      } else {
+        setMicActive(false);
+        setStatus('Připraven', '#aaa');
+      }
+    };
+  }
+
+  function startListening() {
+    if (!recog) initRecog();
+    addedIds = new Set();
+    document.getElementById('voiceLog').innerHTML = '';
+    try {
+      recog.start();
+    } catch (e) {
+      // Pokud už běží
+      setStatus('Klepni pro stop', '#22c55e');
+    }
+  }
+
+  function stopListening() {
+    listening = false;
+    try { recog?.stop(); } catch {}
+    setMicActive(false);
+    setStatus('Připraven', '#aaa');
+  }
+
+  // ── Veřejné funkce ─────────────────────────────────────────
+  window.voiceToggleMic = function () {
+    if (listening) stopListening(); else startListening();
+  };
+
+  window.voiceToggle = function () {
+    const bar = document.getElementById('voiceBar');
+    const open = bar.style.display !== 'none';
+    bar.style.display = open ? 'none' : 'block';
+    if (open && listening) stopListening();
+    if (!open) {
+      if (!SpeechRecognition) {
+        setStatus('❌ Prohlížeč nepodporuje hlasové zadávání', '#e8433a');
+      } else {
+        setStatus('Připraven', '#aaa');
+      }
+    }
+  };
+
+  // Reset přidaných hráčů při otevření nového zápasu
+  const _orig = window.openAddMatch;
+  window.openAddMatch = function () {
+    addedIds = new Set();
+    if (listening) stopListening();
+    document.getElementById('voiceBar').style.display = 'none';
+    document.getElementById('voiceLog').innerHTML = '';
+    if (_orig) _orig.apply(this, arguments);
+  };
+})();
+</script>
 </body>
 </html>
