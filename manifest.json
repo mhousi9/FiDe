@@ -1,6 +1,6 @@
 {
   "name": "Fin Deník",
-  "short_name": "Fin Deník",
+  "short_name": "Finance",
   "description": "Finanční deník – přehled příjmů a výdajů",
   "start_url": "./",
   "display": "standalone",
