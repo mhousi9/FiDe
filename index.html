@@ -4,13 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Fin Deník</title>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#f5c842">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Fin Deník">
-<link rel="apple-touch-icon" href="./icon-192.png">
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(()=>{});
@@ -750,13 +743,13 @@ function renderMonths(year) {
     const saved = sal - exp + inc;
     yExp+=exp; yInc+=inc; ySal+=sal;
     const hasTx = (md.expenses||[]).length + (md.income||[]).length > 0;
-    const savedStr = (hasSaved && sal) ? (saved>=0?'+':'')+fmt(saved) : '';
+    const savedStr = (hasSaved && sal) ? (saved>=0?'+':'')+fmtFull(saved) : '';
     const savedCls = saved<0?'neg':'';
     return `<div class="month-row" onclick="openMonth(${year},${i+1})">
       <div class="month-num">${String(i+1).padStart(2,'0')}</div>
       <div class="month-name">${mn}</div>
       ${hasTx ? `<div class="month-meta">
-        ${hasSaved ? `<div class="month-exp">−${fmt(exp)}</div>` : ''}
+        ${hasSaved ? `<div class="month-exp">−${fmtFull(exp)}</div>` : ''}
         ${savedStr ? `<div class="month-sav ${savedCls}">${savedStr}</div>` : ''}
       </div>` : '<div class="month-meta" style="color:var(--txt3);font-size:.75rem">—</div>'}
       <div class="month-arrow">›</div>
